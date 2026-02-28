@@ -7,19 +7,8 @@ on:
 
 jobs:
   build:
-    name: Build (${{ matrix.platform }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: ubuntu-22.04
-            args: ''
-          - platform: macos-latest
-            args: '--target universal-apple-darwin'
-          - platform: windows-latest
-            args: ''
-
-    runs-on: ${{ matrix.platform }}
+    name: Build Windows
+    runs-on: windows-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,16 +20,6 @@ jobs:
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Install dependencies (Ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
-      - name: Install Rust targets (macOS only)
-        if: matrix.platform == 'macos-latest'
-        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli
@@ -59,12 +38,9 @@ jobs:
           releaseBody: |
             ## Installation
 
-            Download the appropriate artifact for your platform:
+            Download the Windows installer below:
             - **Windows**: `.msi` installer or `.exe` (portable)
-            - **macOS**: `.dmg` disk image
-            - **Linux**: `.AppImage` (universal) or `.deb` (Debian/Ubuntu)
 
             See the [README](https://github.com/magnetgrouplabs/ntfy.desktop) for details.
           releaseDraft: false
           prerelease: false
-          args: ${{ matrix.args }}
