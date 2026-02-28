@@ -11,33 +11,44 @@ jobs:
     permissions:
       contents: write
     runs-on: ubuntu-latest
-    outputs:
-      release_id: ${{ steps.create-release.outputs.id }}
     steps:
       - name: Create Release
-        id: create-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
-          release_name: ntfy.desktop ${{ github.ref_name }}
+          name: ntfy.desktop ${{ github.ref_name }}
+          body: |
+            ## Windows Desktop Client for ntfy
+
+            ### Installation
+
+            Download the Windows installer:
+            - **Installer**: `.msi` file for standard installation
+            - **Portable**: `.exe` file for portable use (no installation required)
+
+            ### Features
+            - High-performance desktop notifications
+            - System tray integration
+            - Native Windows notifications
+            - Background polling
+            - Settings persistence
+
+            **Note**: This is a Windows-only application built with Tauri 2.0.
           draft: false
           prerelease: false
 
-  build-tauri:
-    name: Build Tauri App
+  build-windows:
+    name: Build Windows App
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        platform: [windows-latest]
-    runs-on: ${{ matrix.platform }}
+    runs-on: windows-latest
     needs: [create-release]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Windows SDK
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -48,26 +59,21 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-
-
       - name: Install npm dependencies
         run: npm ci
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@v2
 
-      - name: Build the Tauri application
-        uses: tauri-apps/tauri-action@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Tauri application
+        run: npm run tauri:build
+
+      - name: Upload MSI installer
+        uses: softprops/action-gh-release@v1
         with:
-          releaseId: ${{ needs.create-release.outputs.release_id }}
-          tagName: ${{ github.ref_name }}
-          releaseName: ntfy.desktop ${{ github.ref_name }}
-          releaseBody: |
-            ## Installation
+          files: src-tauri/target/release/bundle/msi/ntfy.desktop_${{ github.ref_name }}_x64_en-US.msi
 
-            Download the Windows installer below:
-            - **Windows**: `.msi` installer or `.exe` (portable)
-
-            **Note**: macOS and Linux builds are planned but not currently available. See the [README](https://github.com/magnetgrouplabs/ntfy.desktop) for details.
+      - name: Upload portable executable
+        uses: softprops/action-gh-release@v1
+        with:
+          files: src-tauri/target/release/bundle/nsis/ntfy.desktop_${{ github.ref_name }}_x64-setup.exe

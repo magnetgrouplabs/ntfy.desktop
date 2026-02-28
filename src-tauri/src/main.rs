@@ -438,61 +438,12 @@ fn main() -> anyhow::Result<()> {
             let is_polling = Arc::new(AtomicBool::new(false));
             let badge_count = Arc::new(AtomicU32::new(0));
 
-            // ── Create Main Window ──────────────────────────────────────
-
-            let webview_url = WebviewUrl::External(
-                instance_url
-                    .parse()
-                    .unwrap_or_else(|_| {
-                        eprintln!("Failed to parse instance URL: {}, using fallback", instance_url);
-                        "https://ntfy.sh/app".parse().unwrap_or_else(|_| {
-                            eprintln!("Failed to parse fallback URL, using hardcoded URL");
-                            tauri::Url::parse("https://ntfy.sh/app").unwrap_or_else(|_| {
-                                eprintln!("All URL parsing attempts failed, using default URL");
-                                // Use a known-good URL that should always work
-                                tauri::Url::parse("https://ntfy.sh/app").expect("Hardcoded URL should always parse")
-                            })
-                        })
-                    }),
-            );
-
-            let window = tauri::WebviewWindowBuilder::new(app, "main", webview_url)
-                .title("ntfy.desktop")
-                .inner_size(1280.0, 720.0)
-                .min_inner_size(400.0, 300.0)
-                .visible(!should_hide && !show_welcome)
-                .center()
-                .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.0")
-                .initialization_script(
-                    // Stub browser Notification API as a no-op class.
-                    // ntfy.desktop delivers notifications natively via the Rust backend,
-                    // so we suppress web notifications to avoid duplicates while also
-                    // preventing the "Notifications are blocked" banner in the ntfy web UI.
-                    r#"
-                    (function() {
-                        function NoopNotification(title, options) {
-                            this.title = title;
-                            this.body = (options && options.body) || "";
-                            this.onclick = null;
-                            this.onclose = null;
-                            this.onerror = null;
-                            this.onshow = null;
-                        }
-                        NoopNotification.permission = "granted";
-                        NoopNotification.requestPermission = function(cb) {
-                            var p = Promise.resolve("granted");
-                            if (cb) cb("granted");
-                            return p;
-                        };
-                        NoopNotification.prototype.close = function() {};
-                        NoopNotification.prototype.addEventListener = function() {};
-                        NoopNotification.prototype.removeEventListener = function() {};
-                        window.Notification = NoopNotification;
-                        console.log("ntfy.desktop: Notification API stubbed");
-                    })();
-                    "#,
-                )
-                .build()?;
+            // Window is now created via tauri.conf.json configuration
+            // The main window with label "main" is defined in the config file
+            
+            // Get the window that was created by tauri.conf.json
+            let window = app.get_webview_window("main")
+                .ok_or("Main window not found - check tauri.conf.json configuration")?;
 
             // Open devtools if --devtools flag was passed (debug builds only)
             #[cfg(debug_assertions)]
