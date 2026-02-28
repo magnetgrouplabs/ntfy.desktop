@@ -20,17 +20,26 @@ jobs:
         with:
           node-version: 20
 
-      - name: Create Test Release
+      - name: Install Tauri CLI via npm
+        run: npm install -g @tauri-apps/cli
+
+      - name: Build Tauri app
+        run: npm run tauri:build
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
           name: 'ntfy.desktop ${{ github.ref_name }}'
           body: |
-            ## Test Release
+            ## Installation
 
-            This is a test release to verify GitHub Actions permissions.
-            
+            Download the Windows installer below:
+            - **Windows**: `.msi` installer or `.exe` (portable)
+
             See the [README](https://github.com/magnetgrouplabs/ntfy.desktop) for details.
-          files: README.md
+          files: src-tauri/target/release/bundle/**/*
           draft: false
           prerelease: false
