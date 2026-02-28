@@ -6,11 +6,35 @@ on:
       - 'v*'
 
 jobs:
-  build:
+  create-release:
+    name: Create Release
     permissions:
       contents: write
-    name: Build Windows
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
+    outputs:
+      release_id: ${{ steps.create-release.outputs.id }}
+    steps:
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ntfy.desktop ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+
+  build-tauri:
+    name: Build Tauri App
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [windows-latest]
+    runs-on: ${{ matrix.platform }}
+    needs: [create-release]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -21,51 +45,29 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Install Node dependencies
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+
+
+      - name: Install npm dependencies
         run: npm ci
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: stable-x86_64-msvc
-          target: x86_64-pc-windows-msvc
-
       - name: Cache Rust dependencies
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: "src-tauri -> target"
+        uses: Swatinem/rust-cache@v2
 
-      - name: Check Windows dependencies
-        shell: powershell
-        run: |
-          # Check if WIX Toolset is available
-          Write-Host "Checking WIX Toolset availability..."
-          if (Test-Path "C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe") {
-            Write-Host "WIX Toolset is already installed"
-          } else {
-            Write-Host "WIX Toolset not found - Tauri will use NSIS bundler instead"
-          }
-
-      - name: Install Tauri CLI via npm
-        run: npm install -g @tauri-apps/cli
-
-      - name: Build Tauri app
-        run: npm run tauri:build
+      - name: Build the Tauri application
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref_name }}
-          name: 'ntfy.desktop ${{ github.ref_name }}'
-          body: |
+          releaseId: ${{ needs.create-release.outputs.release_id }}
+          tagName: ${{ github.ref_name }}
+          releaseName: ntfy.desktop ${{ github.ref_name }}
+          releaseBody: |
             ## Installation
 
             Download the Windows installer below:
             - **Windows**: `.msi` installer or `.exe` (portable)
 
-            See the [README](https://github.com/magnetgrouplabs/ntfy.desktop) for details.
-          files: src-tauri/target/release/bundle/**/*
-          draft: false
-          prerelease: false
+            **Note**: macOS and Linux builds are planned but not currently available. See the [README](https://github.com/magnetgrouplabs/ntfy.desktop) for details.

@@ -92,12 +92,10 @@ impl NotificationManager {
         // Find the ntfytoast.exe path
         let ntfytoast_path = self.find_ntfytoast_path();
 
-        if ntfytoast_path.is_none() {
+        let Some(exe_path) = ntfytoast_path else {
             eprintln!("ntfytoast.exe not found, falling back to notify-rust");
             return self.show_notification_fallback(data).await;
-        }
-
-        let exe_path = ntfytoast_path.expect("ntfytoast_path should be Some at this point");
+        };
         println!("DEBUG: Using ntfytoast.exe at: {}", exe_path);
 
         // Build command arguments
@@ -376,21 +374,26 @@ impl NotificationManager {
             .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
             .default_headers({
                 let mut headers = reqwest::header::HeaderMap::new();
-                headers.insert(
-                    reqwest::header::ACCEPT,
-                    "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8".parse()
-                        .expect("Failed to parse Accept header")
-                );
-                headers.insert(
-                    reqwest::header::REFERER,
-                    "https://ntfy.sh/".parse()
-                        .expect("Failed to parse Referer header")
-                );
-                headers.insert(
-                    reqwest::header::ACCEPT_LANGUAGE,
-                    "en-US,en;q=0.9".parse()
-                        .expect("Failed to parse Accept-Language header")
-                );
+                
+                // Safe header parsing with fallbacks
+                if let Ok(accept_header) = "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8".parse() {
+                    headers.insert(reqwest::header::ACCEPT, accept_header);
+                } else {
+                    eprintln!("WARNING: Failed to parse Accept header, using default");
+                }
+                
+                if let Ok(referer_header) = "https://ntfy.sh/".parse() {
+                    headers.insert(reqwest::header::REFERER, referer_header);
+                } else {
+                    eprintln!("WARNING: Failed to parse Referer header, using default");
+                }
+                
+                if let Ok(language_header) = "en-US,en;q=0.9".parse() {
+                    headers.insert(reqwest::header::ACCEPT_LANGUAGE, language_header);
+                } else {
+                    eprintln!("WARNING: Failed to parse Accept-Language header, using default");
+                }
+                
                 headers
             })
             .build()

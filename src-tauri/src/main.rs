@@ -383,21 +383,29 @@ fn main() -> anyhow::Result<()> {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             println!("Another instance tried to run with args: {:?}, cwd: {:?}", argv, cwd);
-            // Focus existing window - with error handling to prevent crashes
-            match app.get_webview_window("main") {
-                Some(window) => {
-                    if let Err(e) = window.set_focus() {
-                        eprintln!("Failed to focus window: {}", e);
+            
+            // Use a background thread to avoid blocking and allow window creation to complete
+            let app_handle = app.clone();
+            std::thread::spawn(move || {
+                // Wait briefly for the main window to be created
+                std::thread::sleep(std::time::Duration::from_millis(100));
+                
+                // Focus existing window - with error handling to prevent crashes
+                match app_handle.get_webview_window("main") {
+                    Some(window) => {
+                        if let Err(e) = window.set_focus() {
+                            eprintln!("Failed to focus window: {}", e);
+                        }
+                        if let Err(e) = window.show() {
+                            eprintln!("Failed to show window: {}", e);
+                        }
+                        println!("Focused existing window");
                     }
-                    if let Err(e) = window.show() {
-                        eprintln!("Failed to show window: {}", e);
+                    None => {
+                        eprintln!("Window 'main' not found when trying to focus existing instance - window may not be initialized yet");
                     }
-                    println!("Focused existing window");
                 }
-                None => {
-                    eprintln!("Window 'main' not found when trying to focus existing instance");
-                }
-            }
+            });
         }))
         .invoke_handler(tauri::generate_handler![
             save_config,
@@ -435,12 +443,17 @@ fn main() -> anyhow::Result<()> {
             let webview_url = WebviewUrl::External(
                 instance_url
                     .parse()
-                    .unwrap_or_else(|_| "https://ntfy.sh/app".parse().unwrap_or_else(|_| {
-                        eprintln!("Failed to parse default URL, using fallback");
-                        tauri::Url::parse("https://ntfy.sh/app").unwrap_or_else(|_| {
-                            panic!("Fallback URL parsing failed");
+                    .unwrap_or_else(|_| {
+                        eprintln!("Failed to parse instance URL: {}, using fallback", instance_url);
+                        "https://ntfy.sh/app".parse().unwrap_or_else(|_| {
+                            eprintln!("Failed to parse fallback URL, using hardcoded URL");
+                            tauri::Url::parse("https://ntfy.sh/app").unwrap_or_else(|_| {
+                                eprintln!("All URL parsing attempts failed, using default URL");
+                                // Use a known-good URL that should always work
+                                tauri::Url::parse("https://ntfy.sh/app").expect("Hardcoded URL should always parse")
+                            })
                         })
-                    })),
+                    }),
             );
 
             let window = tauri::WebviewWindowBuilder::new(app, "main", webview_url)
@@ -891,5 +904,8 @@ fn handle_menu_event(app: &tauri::AppHandle, event: tauri::menu::MenuEvent) {
 /// Load the tray icon from embedded bytes
 fn load_tray_icon() -> Image<'static> {
     let ico_bytes = include_bytes!("../icons/icon.ico");
-    Image::from_bytes(ico_bytes).unwrap_or_else(|_| Image::new_owned(vec![0u8; 4], 1, 1))
+    Image::from_bytes(ico_bytes).unwrap_or_else(|e| {
+        eprintln!("Failed to load tray icon: {}, using fallback", e);
+        Image::new_owned(vec![0u8; 4], 1, 1)
+    })
 }

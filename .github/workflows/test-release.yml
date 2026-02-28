@@ -56,9 +56,9 @@ jobs:
             exit 1
           }
           
-          # Check for installer files
+          # Check for installer files (Windows only)
           $installers = Get-ChildItem -Path $bundlePath -Recurse -File | Where-Object {
-            $_.Extension -in @('.msi', '.exe', '.deb', '.AppImage', '.dmg')
+            $_.Extension -in @('.msi', '.exe')
           }
           
           if ($installers.Count -eq 0) {
@@ -142,8 +142,8 @@ jobs:
             
             ### Files
             - **Windows**: `.msi` installer or `.exe` (portable)
-            - **Linux**: `.AppImage` or `.deb` package
-            - **macOS**: `.dmg` installer
+            
+            **Note**: macOS and Linux builds are planned but not currently available.
             
             ### Cleanup
             This release will be automatically deleted after testing.
