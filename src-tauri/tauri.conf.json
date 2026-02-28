@@ -8,7 +8,17 @@
   },
   "app": {
     "withGlobalTauri": true,
-    "windows": [],
+    "windows": [
+      {
+        "label": "main",
+        "title": "ntfy.desktop",
+        "url": "https://ntfy.sh/app",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600
+      }
+    ],
     "security": {
       "csp": null
     }
