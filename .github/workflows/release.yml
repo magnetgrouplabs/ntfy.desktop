@@ -20,13 +20,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Build Rust binary
-        run: cd src-tauri && cargo build --release
-
-      - name: Create Release
+      - name: Create Test Release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name }}
@@ -37,6 +31,6 @@ jobs:
             This is a test release to verify GitHub Actions permissions.
             
             See the [README](https://github.com/magnetgrouplabs/ntfy.desktop) for details.
-          files: src-tauri/target/release/ntfy.desktop.exe
+          files: README.md
           draft: false
           prerelease: false
