@@ -46,17 +46,17 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Use auto-versioning for release builds
-if [ -z "$VERSION" ]; then
-    echo "Using automatic date-based versioning..."
-    VERSION=$(date +v%Y.%m.%d.1)
-else
-    # Validate version format
-    if [[ ! "$VERSION" =~ ^v[0-9]{4}.[0-9]{2}.[0-9]{2}.[0-9]+$ ]]; then
-        echo "Error: Version must be in format vYYYY.MM.DD.X"
-        exit 1
+    # Use auto-versioning for release builds
+    if [ -z "$VERSION" ]; then
+        echo "Using automatic date-based versioning..."
+        VERSION=$(date +v%y.%-m.1)
+    else
+        # Validate version format (YY.M.X)
+        if [[ ! "$VERSION" =~ ^v[0-9]{2}.[0-9]{1,2}.[0-9]+$ ]]; then
+            echo "Error: Version must be in format vYY.M.X"
+            exit 1
+        fi
     fi
-fi
 
 echo "Preparing ntfy.desktop release $VERSION..."
 

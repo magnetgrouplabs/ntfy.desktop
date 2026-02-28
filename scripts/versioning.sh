@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Date-based Versioning Script for ntfy.desktop
-# Format: YYYY.MM.DD.build (e.g., 2026.02.27.1)
+# Format: YY.M.BUILD (e.g., 26.2.1) - Windows compatible format (each component ≤ 255)
 
 set -e
 
@@ -9,8 +9,8 @@ set -e
 VERSION_FILE="scripts/last_version.txt"
 BUILD_LOG="scripts/build_log.txt"
 
-# Get current date in YYYY.MM.DD format
-CURRENT_DATE=$(date +%Y.%m.%d)
+# Get current date in YY.M format (Windows compatible, no padding)
+CURRENT_DATE=$(date +%y.%-m)
 
 # Function to get next build number
 get_next_build_number() {
@@ -63,8 +63,8 @@ log_build() {
     # Create build log directory if it doesn't exist
     mkdir -p "$(dirname "$BUILD_LOG")"
     
-    # Append to build log
-    echo "$date:$build_number:$version" >> "$BUILD_LOG"
+    # Append to build log (YY.M:BUILD:YY.M.BUILD)
+    echo -e "$date:$build_number:$version" >> "$BUILD_LOG"
 }
 
 # Function to get current version
