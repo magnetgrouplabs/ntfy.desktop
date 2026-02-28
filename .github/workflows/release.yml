@@ -73,11 +73,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: src-tauri/target/release/bundle/msi/ntfy.desktop_26.2.5_x64_en-US.msi
+          files: src-tauri/target/release/bundle/msi/ntfy.desktop_26.2.6_x64_en-US.msi
 
       - name: Upload portable executable
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: src-tauri/target/release/bundle/nsis/ntfy.desktop_26.2.5_x64-setup.exe
+          files: src-tauri/target/release/bundle/nsis/ntfy.desktop_26.2.6_x64-setup.exe
