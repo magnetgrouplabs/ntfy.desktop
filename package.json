@@ -1,6 +1,6 @@
 {
   "name": "ntfy.desktop",
-  "version": "26.2.1",
+  "version": "26.2.2",
   "description": "A high-performance desktop notification client for ntfy, built with Tauri",
   "type": "module",
   "scripts": {
