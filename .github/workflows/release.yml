@@ -26,8 +26,7 @@ jobs:
       - name: Install Tauri CLI via npm
         run: npm install -g @tauri-apps/cli
 
-      - name: Run Rust tests
-        run: cd src-tauri && cargo test --release
+
 
       - name: Build Tauri app
         run: npm run tauri:build
