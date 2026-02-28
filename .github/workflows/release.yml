@@ -19,6 +19,31 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable-x86_64-msvc
+          target: x86_64-pc-windows-msvc
+
+      - name: Cache Rust dependencies
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - name: Install Windows dependencies
+        shell: powershell
+        run: |
+          # Install WIX Toolset for MSI generation
+          if (-not (Test-Path "C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe")) {
+            Write-Host "Installing WIX Toolset..."
+            Invoke-WebRequest -Uri "https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311.exe" -OutFile "wix311.exe"
+            Start-Process -FilePath "wix311.exe" -ArgumentList "/quiet" -Wait
+          }
 
       - name: Install Tauri CLI via npm
         run: npm install -g @tauri-apps/cli
@@ -26,7 +51,7 @@ jobs:
       - name: Build Tauri app
         run: npm run tauri:build
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
