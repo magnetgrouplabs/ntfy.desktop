@@ -23,26 +23,29 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli
+      - name: Install Tauri CLI via npm
+        run: npm install -g @tauri-apps/cli
 
       - name: Run Rust tests
         run: cd src-tauri && cargo test --release
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+        run: npm run tauri:build
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
         with:
-          tauriScript: cargo tauri
-          tagName: ${{ github.ref_name }}
-          releaseName: 'ntfy.desktop ${{ github.ref_name }}'
-          releaseBody: |
+          tag_name: ${{ github.ref_name }}
+          name: 'ntfy.desktop ${{ github.ref_name }}'
+          body: |
             ## Installation
 
             Download the Windows installer below:
             - **Windows**: `.msi` installer or `.exe` (portable)
 
             See the [README](https://github.com/magnetgrouplabs/ntfy.desktop) for details.
-          releaseDraft: false
+          files: src-tauri/target/release/bundle/**/*
+          draft: false
           prerelease: false
