@@ -54,7 +54,10 @@ impl NtfyClient {
         let client = Client::builder()
             .timeout(Duration::from_secs(30))
             .build()
-            .unwrap_or_else(|_| Client::new());
+            .unwrap_or_else(|e| {
+                eprintln!("Failed to build HTTP client with timeout, using default: {}", e);
+                Client::new()
+            });
 
         Self {
             client,

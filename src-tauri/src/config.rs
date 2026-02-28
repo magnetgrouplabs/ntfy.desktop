@@ -139,15 +139,20 @@ pub async fn save_config(app_handle: &AppHandle, config: AppConfig) -> Result<()
     let app_dir = app_handle
         .path()
         .app_config_dir()
-        .map_err(|_| anyhow::anyhow!("Could not get app config directory"))?;
+        .map_err(|e| anyhow::anyhow!("Could not get app config directory: {}", e))?;
 
-    std::fs::create_dir_all(&app_dir)?;
+    if let Err(e) = std::fs::create_dir_all(&app_dir) {
+        return Err(anyhow::anyhow!("Failed to create config directory {}: {}", app_dir.display(), e));
+    }
 
     let config_path = app_dir.join("prefs.json");
-    let config_json = serde_json::to_string_pretty(&config)?;
+    let config_json = serde_json::to_string_pretty(&config)
+        .map_err(|e| anyhow::anyhow!("Failed to serialize config: {}", e))?;
 
-    tokio::fs::write(config_path, config_json).await?;
+    tokio::fs::write(&config_path, config_json).await
+        .map_err(|e| anyhow::anyhow!("Failed to write config file {}: {}", config_path.display(), e))?;
 
+    println!("Config saved successfully to: {}", config_path.display());
     Ok(())
 }
 
@@ -155,18 +160,25 @@ pub async fn load_config(app_handle: &AppHandle) -> Result<AppConfig> {
     let app_dir = app_handle
         .path()
         .app_config_dir()
-        .map_err(|_| anyhow::anyhow!("Could not get app config directory"))?;
+        .map_err(|e| anyhow::anyhow!("Could not get app config directory: {}", e))?;
 
     let config_path = app_dir.join("prefs.json");
 
     if !config_path.exists() {
+        println!("Config file not found at {}, using defaults", config_path.display());
         return Ok(AppConfig::default());
     }
 
-    let config_data = tokio::fs::read(config_path).await?;
-    let config_str = String::from_utf8(config_data)?;
+    let config_data = tokio::fs::read(&config_path).await
+        .map_err(|e| anyhow::anyhow!("Failed to read config file {}: {}", config_path.display(), e))?;
+    
+    let config_str = String::from_utf8(config_data)
+        .map_err(|e| anyhow::anyhow!("Config file {} contains invalid UTF-8: {}", config_path.display(), e))?;
 
-    let config: AppConfig = serde_json::from_str(&config_str)?;
+    let config: AppConfig = serde_json::from_str(&config_str)
+        .map_err(|e| anyhow::anyhow!("Failed to parse config file {}: {}", config_path.display(), e))?;
+
+    println!("Config loaded successfully from: {}", config_path.display());
     Ok(config)
 }
 
@@ -223,14 +235,16 @@ mod tests {
             urgent_priority_threshold: 4,
         };
 
-        let serialized = serde_json::to_string(&config).unwrap();
+        let serialized = serde_json::to_string(&config)
+            .expect("Failed to serialize config for test");
 
         // Credentials should NOT appear in serialized JSON (stored in OS keychain)
         assert!(!serialized.contains("test-token"));
         assert!(!serialized.contains("testuser"));
         assert!(!serialized.contains("testpass"));
 
-        let deserialized: AppConfig = serde_json::from_str(&serialized).unwrap();
+        let deserialized: AppConfig = serde_json::from_str(&serialized)
+            .expect("Failed to deserialize config for test");
 
         assert_eq!(config.instance_url, deserialized.instance_url);
         // Credentials are skip_serializing so they round-trip as empty
@@ -345,7 +359,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_file_operations() {
-        let temp_dir = TempDir::new().unwrap();
+        let temp_dir = TempDir::new().expect("Failed to create temp directory");
         let config_path = temp_dir.path().join("prefs.json");
 
         // Test saving config (credentials stored in keychain, not on disk)
@@ -365,13 +379,16 @@ mod tests {
         };
 
         // Save config manually
-        let config_json = serde_json::to_string_pretty(&config).unwrap();
-        fs::write(&config_path, config_json).await.unwrap();
+        let config_json = serde_json::to_string_pretty(&config)
+            .expect("Failed to serialize config");
+        fs::write(&config_path, config_json).await
+            .expect("Failed to write config file");
 
         // Load config manually
-        let config_data = fs::read(&config_path).await.unwrap();
-        let config_str = String::from_utf8(config_data).unwrap();
-        let loaded_config: AppConfig = serde_json::from_str(&config_str).unwrap();
+        let config_data = fs::read(&config_path).await
+            .expect("Failed to read config file");
+        let config_str = String::from_utf8(config_data).expect("Test operation failed");
+        let loaded_config: AppConfig = serde_json::from_str(&config_str).expect("Test operation failed");
 
         // Verify loaded config matches saved config (non-credential fields)
         assert_eq!(config.instance_url, loaded_config.instance_url);
@@ -394,41 +411,41 @@ mod tests {
 
     #[tokio::test]
     async fn test_file_operations_with_directory_creation() {
-        let temp_dir = TempDir::new().unwrap();
+        let temp_dir = TempDir::new().expect("Test operation failed");
         let sub_dir = temp_dir.path().join("config");
         let config_path = sub_dir.join("prefs.json");
 
         // Create directory and save config
-        fs::create_dir_all(&sub_dir).await.unwrap();
+        fs::create_dir_all(&sub_dir).await.expect("Test operation failed");
 
         let config = AppConfig::default();
-        let config_json = serde_json::to_string_pretty(&config).unwrap();
-        fs::write(&config_path, config_json).await.unwrap();
+        let config_json = serde_json::to_string_pretty(&config).expect("Test operation failed");
+        fs::write(&config_path, config_json).await.expect("Test operation failed");
 
         // Verify file exists
         assert!(config_path.exists());
 
         // Load and verify config
-        let config_data = fs::read(&config_path).await.unwrap();
-        let config_str = String::from_utf8(config_data).unwrap();
-        let loaded_config: AppConfig = serde_json::from_str(&config_str).unwrap();
+        let config_data = fs::read(&config_path).await.expect("Test operation failed");
+        let config_str = String::from_utf8(config_data).expect("Test operation failed");
+        let loaded_config: AppConfig = serde_json::from_str(&config_str).expect("Test operation failed");
 
         assert_eq!(config.instance_url, loaded_config.instance_url);
     }
 
     #[tokio::test]
     async fn test_invalid_json_handling() {
-        let temp_dir = TempDir::new().unwrap();
+        let temp_dir = TempDir::new().expect("Test operation failed");
         let config_path = temp_dir.path().join("prefs.json");
 
         // Write invalid JSON
         fs::write(&config_path, "invalid json content")
             .await
-            .unwrap();
+            .expect("Test operation failed");
 
         // Attempt to load - this should fail with serde error
-        let config_data = fs::read(&config_path).await.unwrap();
-        let config_str = String::from_utf8(config_data).unwrap();
+        let config_data = fs::read(&config_path).await.expect("Test operation failed");
+        let config_str = String::from_utf8(config_data).expect("Test operation failed");
         let result: Result<AppConfig, _> = serde_json::from_str(&config_str);
 
         assert!(result.is_err());
@@ -445,8 +462,8 @@ mod tests {
             ..Default::default()
         };
 
-        let serialized = serde_json::to_string(&empty_config).unwrap();
-        let deserialized: AppConfig = serde_json::from_str(&serialized).unwrap();
+        let serialized = serde_json::to_string(&empty_config).expect("Test operation failed");
+        let deserialized: AppConfig = serde_json::from_str(&serialized).expect("Test operation failed");
 
         assert_eq!(empty_config.instance_url, deserialized.instance_url);
         assert_eq!(empty_config.topics, deserialized.topics);
@@ -471,8 +488,8 @@ mod tests {
             ..Default::default()
         };
 
-        let serialized = serde_json::to_string(&special_config).unwrap();
-        let deserialized: AppConfig = serde_json::from_str(&serialized).unwrap();
+        let serialized = serde_json::to_string(&special_config).expect("Test operation failed");
+        let deserialized: AppConfig = serde_json::from_str(&serialized).expect("Test operation failed");
 
         assert_eq!(special_config.instance_url, deserialized.instance_url);
         assert_eq!(special_config.topics, deserialized.topics);

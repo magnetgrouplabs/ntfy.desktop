@@ -93,11 +93,11 @@ impl NotificationManager {
         let ntfytoast_path = self.find_ntfytoast_path();
 
         if ntfytoast_path.is_none() {
-            eprintln!("DEBUG: ntfytoast.exe not found, falling back to notify-rust");
+            eprintln!("ntfytoast.exe not found, falling back to notify-rust");
             return self.show_notification_fallback(data).await;
         }
 
-        let exe_path = ntfytoast_path.unwrap();
+        let exe_path = ntfytoast_path.expect("ntfytoast_path should be Some at this point");
         println!("DEBUG: Using ntfytoast.exe at: {}", exe_path);
 
         // Build command arguments
@@ -168,21 +168,28 @@ impl NotificationManager {
         args.push("com.anthony.ntfy.desktop".to_string());
 
         // Execute ntfytoast.exe
-        println!("DEBUG: Executing ntfytoast.exe with args: {:?}", args);
+        println!("Executing ntfytoast.exe with args: {:?}", args);
 
-        let output = Command::new(&exe_path)
+        let output = match Command::new(&exe_path)
             .args(&args)
-            .output()?;
+            .output() 
+        {
+            Ok(output) => output,
+            Err(e) => {
+                eprintln!("Failed to execute ntfytoast.exe: {}", e);
+                return self.show_notification_fallback(data).await;
+            }
+        };
 
         let exit_code = output.status.code().unwrap_or(-1);
         let stdout = String::from_utf8_lossy(&output.stdout);
         let stderr = String::from_utf8_lossy(&output.stderr);
 
         if !stdout.is_empty() {
-            println!("DEBUG: ntfytoast.exe stdout: {}", stdout);
+            println!("ntfytoast.exe stdout: {}", stdout);
         }
         if !stderr.is_empty() {
-            eprintln!("DEBUG: ntfytoast.exe stderr: {}", stderr);
+            eprintln!("ntfytoast.exe stderr: {}", stderr);
         }
 
         // Exit codes:
@@ -190,10 +197,10 @@ impl NotificationManager {
         // 5 = TextEntered, -1 = Failed
         match exit_code {
             0 | 1 | 2 | 3 | 4 | 5 => {
-                println!("DEBUG: Windows toast notification shown successfully (exit code: {})", exit_code);
+                println!("Windows toast notification shown successfully (exit code: {})", exit_code);
             }
             _ => {
-                eprintln!("DEBUG: ntfytoast.exe failed with exit code: {}", exit_code);
+                eprintln!("ntfytoast.exe failed with exit code: {}", exit_code);
                 // Fall back to notify-rust
                 return self.show_notification_fallback(data).await;
             }
@@ -371,15 +378,18 @@ impl NotificationManager {
                 let mut headers = reqwest::header::HeaderMap::new();
                 headers.insert(
                     reqwest::header::ACCEPT,
-                    "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8".parse().unwrap()
+                    "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8".parse()
+                        .expect("Failed to parse Accept header")
                 );
                 headers.insert(
                     reqwest::header::REFERER,
-                    "https://ntfy.sh/".parse().unwrap()
+                    "https://ntfy.sh/".parse()
+                        .expect("Failed to parse Referer header")
                 );
                 headers.insert(
                     reqwest::header::ACCEPT_LANGUAGE,
-                    "en-US,en;q=0.9".parse().unwrap()
+                    "en-US,en;q=0.9".parse()
+                        .expect("Failed to parse Accept-Language header")
                 );
                 headers
             })
@@ -443,7 +453,8 @@ impl NotificationManager {
         let image_bytes = image_bytes.to_vec();
         let processed = tokio::task::spawn_blocking(move || -> Result<Vec<u8>> {
             // Load image using image crate
-            let img = image::load_from_memory(&image_bytes)?;
+            let img = image::load_from_memory(&image_bytes)
+                .map_err(|e| anyhow::anyhow!("Failed to load image from memory: {}", e))?;
 
             // Resize to 128x128 using Lanczos3 for quality
             let resized = img.resize(128, 128, image::imageops::FilterType::Lanczos3);
@@ -451,20 +462,19 @@ impl NotificationManager {
             // Encode as PNG
             let mut png_bytes: Vec<u8> = Vec::new();
             let mut cursor = std::io::Cursor::new(&mut png_bytes);
-            resized.write_to(&mut cursor, image::ImageFormat::Png)?;
+            resized.write_to(&mut cursor, image::ImageFormat::Png)
+                .map_err(|e| anyhow::anyhow!("Failed to encode image as PNG: {}", e))?;
 
             // Check size (ntfytoast requires <= 200KB)
             if png_bytes.len() > 200 * 1024 {
-                // Try with lower quality settings - just use the bytes we have
-                // If still too large, it might fail in ntfytoast
-                eprintln!("DEBUG: Warning - icon size {} bytes exceeds 200KB limit", png_bytes.len());
+                eprintln!("Warning - icon size {} bytes exceeds 200KB limit", png_bytes.len());
             }
 
             Ok(png_bytes)
         }).await
-        .map_err(|e| anyhow::anyhow!("Image processing task failed: {}", e))?;
+        .map_err(|e| anyhow::anyhow!("Image processing task failed: {}", e))??;
 
-        processed
+        Ok(processed)
     }
 
     /// Get the best available icon for notification

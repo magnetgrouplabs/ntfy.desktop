@@ -383,11 +383,20 @@ fn main() -> anyhow::Result<()> {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
             println!("Another instance tried to run with args: {:?}, cwd: {:?}", argv, cwd);
-            // Focus existing window
-            if let Some(window) = app.get_webview_window("main") {
-                let _ = window.set_focus();
-                let _ = window.show();
-                println!("Focused existing window");
+            // Focus existing window - with error handling to prevent crashes
+            match app.get_webview_window("main") {
+                Some(window) => {
+                    if let Err(e) = window.set_focus() {
+                        eprintln!("Failed to focus window: {}", e);
+                    }
+                    if let Err(e) = window.show() {
+                        eprintln!("Failed to show window: {}", e);
+                    }
+                    println!("Focused existing window");
+                }
+                None => {
+                    eprintln!("Window 'main' not found when trying to focus existing instance");
+                }
             }
         }))
         .invoke_handler(tauri::generate_handler![
@@ -426,7 +435,12 @@ fn main() -> anyhow::Result<()> {
             let webview_url = WebviewUrl::External(
                 instance_url
                     .parse()
-                    .unwrap_or_else(|_| "https://ntfy.sh/app".parse().unwrap()),
+                    .unwrap_or_else(|_| "https://ntfy.sh/app".parse().unwrap_or_else(|_| {
+                        eprintln!("Failed to parse default URL, using fallback");
+                        tauri::Url::parse("https://ntfy.sh/app").unwrap_or_else(|_| {
+                            panic!("Fallback URL parsing failed");
+                        })
+                    })),
             );
 
             let window = tauri::WebviewWindowBuilder::new(app, "main", webview_url)
@@ -635,7 +649,10 @@ fn main() -> anyhow::Result<()> {
 fn load_config_sync(app_handle: &tauri::AppHandle) -> config::AppConfig {
     let app_dir = match app_handle.path().app_config_dir() {
         Ok(dir) => dir,
-        Err(_) => return config::AppConfig::default(),
+        Err(e) => {
+            eprintln!("Failed to get app config directory: {}", e);
+            return config::AppConfig::default();
+        },
     };
 
     let config_path = app_dir.join("prefs.json");
@@ -647,10 +664,16 @@ fn load_config_sync(app_handle: &tauri::AppHandle) -> config::AppConfig {
         match std::fs::read_to_string(&config_path) {
             Ok(data) => {
                 println!("Loaded config from: {:?}", config_path);
-                serde_json::from_str(&data).unwrap_or_default()
+                match serde_json::from_str(&data) {
+                    Ok(config) => config,
+                    Err(e) => {
+                        eprintln!("Failed to parse config file {}, using default: {}", config_path.display(), e);
+                        config::AppConfig::default()
+                    }
+                }
             }
             Err(e) => {
-                eprintln!("Failed to read config file: {}", e);
+                eprintln!("Failed to read config file {}: {}", config_path.display(), e);
                 config::AppConfig::default()
             }
         }

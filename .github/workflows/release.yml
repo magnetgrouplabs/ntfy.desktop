@@ -41,9 +41,9 @@ jobs:
           # Check if WIX Toolset is available
           Write-Host "Checking WIX Toolset availability..."
           if (Test-Path "C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe") {
-            Write-Host "✓ WIX Toolset is already installed"
+            Write-Host "WIX Toolset is already installed"
           } else {
-            Write-Host "⚠ WIX Toolset not found - Tauri will use NSIS bundler instead"
+            Write-Host "WIX Toolset not found - Tauri will use NSIS bundler instead"
           }
 
       - name: Install Tauri CLI via npm

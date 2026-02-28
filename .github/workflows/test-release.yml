@@ -1,0 +1,172 @@
+name: Test Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*-test'
+
+jobs:
+  validate-build:
+    name: Validate Build
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable-x86_64-msvc
+          target: x86_64-pc-windows-msvc
+
+      - name: Cache Rust dependencies
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - name: Run Rust tests
+        run: cd src-tauri && cargo test --release --verbose
+
+      - name: Verify Tauri CLI installation
+        run: npm install -g @tauri-apps/cli
+
+      - name: Build verification
+        run: npm run tauri:build -- --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate installer files
+        shell: powershell
+        run: |
+          Write-Host "Validating installer files..."
+          $bundlePath = "src-tauri/target/release/bundle"
+          
+          # Check if bundle directory exists
+          if (-not (Test-Path $bundlePath)) {
+            Write-Error "Bundle directory not found at $bundlePath"
+            exit 1
+          }
+          
+          # Check for installer files
+          $installers = Get-ChildItem -Path $bundlePath -Recurse -File | Where-Object {
+            $_.Extension -in @('.msi', '.exe', '.deb', '.AppImage', '.dmg')
+          }
+          
+          if ($installers.Count -eq 0) {
+            Write-Error "No installer files found"
+            exit 1
+          }
+          
+          Write-Host "Found installer files:"
+          $installers | ForEach-Object { Write-Host "  - $($_.Name)" }
+          
+          # Validate file sizes (basic sanity check)
+          foreach ($installer in $installers) {
+            $sizeMB = [math]::Round($installer.Length / 1MB, 2)
+            Write-Host "$($installer.Name): $sizeMB MB"
+            
+            if ($installer.Length -lt 1024) {
+              Write-Error "Installer file $($installer.Name) is too small ($($installer.Length) bytes)"
+              exit 1
+            }
+          }
+
+  create-test-release:
+    name: Create Test Release
+    needs: validate-build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable-x86_64-msvc
+          target: x86_64-pc-windows-msvc
+
+      - name: Cache Rust dependencies
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "src-tauri -> target"
+
+      - name: Build Tauri app
+        run: npm run tauri:build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Test Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: 'ntfy.desktop TEST RELEASE ${{ github.ref_name }}'
+          body: |
+            ## ⚠️ TEST RELEASE ⚠️
+            
+            This is a **test release** for validation purposes only.
+            
+            **Do not use in production!**
+            
+            ### Validation Status
+            ✅ Build verification passed
+            ✅ Rust tests passed
+            ✅ Installer files validated
+            
+            ### Test Instructions
+            1. Download and install the application
+            2. Verify basic functionality:
+               - Application launches
+               - System tray icon appears
+               - Settings window opens
+               - Notifications work
+            3. Report any issues
+            
+            ### Files
+            - **Windows**: `.msi` installer or `.exe` (portable)
+            - **Linux**: `.AppImage` or `.deb` package
+            - **macOS**: `.dmg` installer
+            
+            ### Cleanup
+            This release will be automatically deleted after testing.
+          files: src-tauri/target/release/bundle/**/*
+          draft: true
+          prerelease: true
+
+  cleanup-test-tags:
+    name: Cleanup Test Tags
+    needs: create-test-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Delete test tag
+        run: |
+          if [[ "${{ github.ref_name }}" == *"-test" ]]; then
+            echo "Deleting test tag: ${{ github.ref_name }}"
+            git push origin --delete "${{ github.ref_name }}" || true
+          else
+            echo "Not a test tag, skipping deletion"
+          fi
