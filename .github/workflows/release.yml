@@ -70,10 +70,14 @@ jobs:
 
       - name: Upload MSI installer
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: src-tauri/target/release/bundle/msi/ntfy.desktop_${{ github.ref_name }}_x64_en-US.msi
+          files: src-tauri/target/release/bundle/msi/ntfy.desktop_26.2.5_x64_en-US.msi
 
       - name: Upload portable executable
         uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: src-tauri/target/release/bundle/nsis/ntfy.desktop_${{ github.ref_name }}_x64-setup.exe
+          files: src-tauri/target/release/bundle/nsis/ntfy.desktop_26.2.5_x64-setup.exe
