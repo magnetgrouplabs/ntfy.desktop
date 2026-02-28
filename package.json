@@ -1,0 +1,33 @@
+{
+  "name": "ntfy.desktop",
+  "version": "2026.2.1",
+  "description": "A high-performance desktop notification client for ntfy, built with Tauri",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "test:performance": "cd performance-tests && npm run test:all",
+    "test:comparison": "cd performance-tests && npm run test:comparison",
+    "test:baseline": "cd performance-tests && npm run test:baseline",
+    "test:network": "cd performance-tests && npm run test:network",
+    "test:quick": "cd performance-tests && npm run quick",
+    "performance:report": "cd performance-tests && npm run report",
+    "build:windows": "powershell -ExecutionPolicy Bypass -File scripts/build-windows.ps1",
+    "build:linux": "bash scripts/build-linux.sh",
+    "build:macos": "bash scripts/build-macos.sh",
+    "build:all": "npm run build:windows && npm run build:linux && npm run build:macos",
+    "release": "bash scripts/release.sh"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0"
+  },
+  "keywords": [
+    "tauri",
+    "desktop",
+    "notifications",
+    "ntfy"
+  ],
+  "author": "Anthony",
+  "license": "MIT"
+}

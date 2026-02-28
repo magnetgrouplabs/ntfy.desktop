@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-02-26T17:17:57.060Z",
+  "results": {
+    "electron": {
+      "startup": 5000,
+      "memory": 200,
+      "cpu": 3
+    },
+    "tauri": {
+      "startup": 1000,
+      "memory": 30,
+      "cpu": 0.5
+    }
+  },
+  "improvements": {
+    "startup": "80.0",
+    "memory": "85.0",
+    "cpu": "83.3"
+  }
+}

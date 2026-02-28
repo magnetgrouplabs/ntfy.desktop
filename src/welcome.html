@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome to ntfy.desktop</title>
+  <link rel="icon" type="image/x-icon" href="../src-tauri/icons/icon.ico">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary-color: #317f6f;
+      --primary-hover: #338574;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1a1a2e;
+        --bg-secondary: #22223b;
+        --bg-tertiary: #2a2a4a;
+        --text-primary: #e0e0e0;
+        --text-secondary: #a0a0c0;
+        --border-color: #3a3a5c;
+        --card-bg: #22223b;
+        --card-border: #3a3a5c;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-tertiary: #e9ecef;
+        --text-primary: #333333;
+        --text-secondary: #666666;
+        --border-color: #e0e0e0;
+        --card-bg: #ffffff;
+        --card-border: #e0e0e0;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+      }
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .welcome-container {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 4px 20px var(--shadow-color);
+      border: 1px solid var(--card-border);
+    }
+    .logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .logo-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+       background: url('./assets/icon/ntfy.png') center/contain no-repeat;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo h1 {
+      font-size: 1.8em;
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+    .logo p {
+      font-size: 1em;
+      color: var(--text-secondary);
+      opacity: 0.8;
+    }
+    .option-card {
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .option-card:hover {
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(49, 127, 111, 0.1);
+    }
+    .option-card.selected {
+      border-color: var(--primary-color);
+      background: rgba(49, 127, 111, 0.05);
+    }
+    .option-card h3 {
+      font-size: 1.1em;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--primary-color);
+    }
+    .option-card p {
+      font-size: 0.9em;
+      color: var(--text-secondary);
+      opacity: 0.8;
+      line-height: 1.4;
+    }
+    .url-input {
+      margin-top: 12px;
+      display: none;
+    }
+    .url-input input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 0.9em;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .url-input input:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 2px rgba(49, 127, 111, 0.1);
+    }
+    .url-input .error {
+      color: #dc3545;
+      font-size: 0.8em;
+      margin-top: 4px;
+      display: none;
+    }
+    .actions {
+      margin-top: 30px;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+    button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+    .btn-primary {
+      background: var(--primary-color);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-primary:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-secondary:hover {
+      background: var(--bg-tertiary);
+    }
+  </style>
+</head>
+<body>
+  <div class="welcome-container">
+    <div class="logo">
+      <div class="logo-icon"></div>
+      <h1>ntfy.desktop</h1>
+      <p>Welcome! Let's get started</p>
+    </div>
+
+    <div class="option-card" data-option="public">
+      <h3>Use ntfy.sh</h3>
+      <p>Connect to the default public instance - perfect for getting started quickly</p>
+    </div>
+
+    <div class="option-card" data-option="custom">
+      <h3>Self-hosted instance</h3>
+      <p>Connect to your own ntfy server instance</p>
+      <div class="url-input">
+        <input type="url" id="custom-url" placeholder="https://your-ntfy.example.com" />
+        <div class="error" id="url-error">Please enter a valid URL starting with http:// or https://</div>
+      </div>
+    </div>
+
+    <div id="auth-fields" style="display:none">
+      <div style="margin-bottom: 12px;">
+        <label style="display:block; font-size:0.85em; font-weight:500; color:var(--text-secondary); margin-bottom:8px;">Authentication</label>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="auth-btn selected" data-auth="none" style="flex:1; padding:8px; border:2px solid var(--border-color); border-radius:6px; background:var(--bg-secondary); color:var(--text-primary); font-size:0.8em; cursor:pointer;">None</button>
+          <button type="button" class="auth-btn" data-auth="token" style="flex:1; padding:8px; border:2px solid var(--border-color); border-radius:6px; background:var(--bg-secondary); color:var(--text-primary); font-size:0.8em; cursor:pointer;">Token</button>
+          <button type="button" class="auth-btn" data-auth="userpass" style="flex:1; padding:8px; border:2px solid var(--border-color); border-radius:6px; background:var(--bg-secondary); color:var(--text-primary); font-size:0.8em; cursor:pointer;">User / Pass</button>
+        </div>
+      </div>
+      <div id="auth-token-fields" style="display:none; margin-bottom:12px;">
+        <label for="api-token" style="display:block; font-size:0.85em; font-weight:500; color:var(--text-secondary); margin-bottom:6px;">API Token</label>
+        <input type="text" id="api-token" placeholder="tk_..." style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:4px; background:var(--bg-primary); color:var(--text-primary); font-size:0.9em;" />
+      </div>
+      <div id="auth-userpass-fields" style="display:none; margin-bottom:12px;">
+        <div style="margin-bottom:8px;">
+          <label for="auth-user" style="display:block; font-size:0.85em; font-weight:500; color:var(--text-secondary); margin-bottom:6px;">Username</label>
+          <input type="text" id="auth-user" placeholder="username" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:4px; background:var(--bg-primary); color:var(--text-primary); font-size:0.9em;" />
+        </div>
+        <div>
+          <label for="auth-pass" style="display:block; font-size:0.85em; font-weight:500; color:var(--text-secondary); margin-bottom:6px;">Password</label>
+          <input type="password" id="auth-pass" placeholder="password" style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:4px; background:var(--bg-primary); color:var(--text-primary); font-size:0.9em;" />
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-secondary" onclick="window.close()">Cancel</button>
+      <button class="btn-primary" id="continue-btn" disabled onclick="continueToApp()">Continue</button>
+    </div>
+  </div>
+
+  <script>
+    const { invoke } = window.__TAURI__.core;
+
+    let selectedOption = null;
+    let customUrlValid = false;
+
+    // Option selection
+    document.querySelectorAll('.option-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedOption = card.dataset.option;
+
+        // Show/hide URL input
+        const urlInput = card.querySelector('.url-input');
+        document.querySelectorAll('.url-input').forEach(input => input.style.display = 'none');
+        if (urlInput) {
+          urlInput.style.display = 'block';
+          document.getElementById('custom-url').focus();
+        }
+
+        // Show auth fields for self-hosted
+        document.getElementById('auth-fields').style.display = selectedOption === 'custom' ? 'block' : 'none';
+
+        updateContinueButton();
+      });
+    });
+
+    // URL validation
+    const urlInput = document.getElementById('custom-url');
+    const urlError = document.getElementById('url-error');
+    
+    urlInput.addEventListener('input', () => {
+      const url = urlInput.value.trim();
+      const isValid = url && (url.startsWith('http://') || url.startsWith('https://'));
+      
+      customUrlValid = isValid;
+      urlError.style.display = isValid ? 'none' : 'block';
+      updateContinueButton();
+    });
+
+    function updateContinueButton() {
+      const continueBtn = document.getElementById('continue-btn');
+      const isValid = selectedOption === 'public' || (selectedOption === 'custom' && customUrlValid);
+      continueBtn.disabled = !isValid;
+    }
+
+    // Auth type selection
+    let selectedAuth = 'none';
+    document.querySelectorAll('.auth-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.auth-btn').forEach(b => {
+          b.classList.remove('selected');
+          b.style.borderColor = 'var(--border-color)';
+        });
+        btn.classList.add('selected');
+        btn.style.borderColor = 'var(--primary-color)';
+        selectedAuth = btn.dataset.auth;
+
+        document.getElementById('auth-token-fields').style.display = selectedAuth === 'token' ? 'block' : 'none';
+        document.getElementById('auth-userpass-fields').style.display = selectedAuth === 'userpass' ? 'block' : 'none';
+      });
+    });
+
+    async function continueToApp() {
+      if (!selectedOption) return;
+
+      let instanceUrl = 'https://ntfy.sh/app'; // Default
+      let isSelfHosted = false;
+
+      if (selectedOption === 'custom') {
+        instanceUrl = urlInput.value.trim();
+        isSelfHosted = true;
+
+        // Ensure URL ends with /app for webview navigation
+        instanceUrl = instanceUrl.replace(/\/?$/, ''); // Remove trailing slash
+        if (!instanceUrl.endsWith('/app')) {
+          instanceUrl = instanceUrl + '/app';
+        }
+      }
+
+      let apiToken = '';
+      let authUser = '';
+      let authPass = '';
+
+      if (isSelfHosted) {
+        if (selectedAuth === 'token') {
+          apiToken = (document.getElementById('api-token').value || '').trim();
+        } else if (selectedAuth === 'userpass') {
+          authUser = (document.getElementById('auth-user').value || '').trim();
+          authPass = (document.getElementById('auth-pass').value || '').trim();
+        }
+      }
+
+      try {
+        // Save the configuration
+        const config = {
+          instance_url: instanceUrl,
+          api_token: apiToken,
+          auth_user: authUser,
+          auth_pass: authPass,
+          topics: 'announcements,stats',
+          poll_rate: 60,
+          datetime_format: 'YYYY-MM-DD hh:mm a',
+          persistent_notifications: false,
+          self_hosted_instance: isSelfHosted,
+          start_hidden: false,
+          quit_on_close: false,
+          dev_tools: false,
+          welcome_completed: false
+        };
+
+        await invoke('save_config', { config });
+        await invoke('complete_welcome');
+      } catch (error) {
+        console.error('Failed to save configuration:', error);
+        alert('Failed to save configuration: ' + error);
+      }
+    }
+
+    // Handle window close
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window.close();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+[package]
+name = "ntfy-desktop"
+version = "2026.2.1"
+description = "A high-performance desktop notification client for ntfy"
+authors = ["Anthony"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.60"
+
+[dependencies]
+tauri = { version = "2.0", features = ["tray-icon", "image-ico"] }
+tauri-plugin-shell = "2.0"
+tauri-plugin-single-instance = "2.0"
+serde_json = "1.0"
+serde = { version = "1.0.0", features = ["derive"] }
+
+# Core dependencies
+reqwest = { version = "0.13", features = ["json"] }
+tokio = { version = "1.0.0", features = ["full"] }
+anyhow = "1.0"
+open = "5.0"
+fs2 = "0.4"
+chrono = "0.4"
+
+# Monitoring
+sysinfo = "0.30"
+
+# Image processing for notification icons
+image = { version = "0.25", default-features = false, features = ["png"] }
+sha2 = "0.10"
+dirs = "5.0"
+
+# Secure credential storage
+keyring = { version = "3", features = ["sync-secret-service", "windows-native", "apple-native"] }
+
+# Platform-specific dependencies
+[target.'cfg(windows)'.dependencies]
+notify-rust = "4"
+windows-registry = "0.5"
+windows = { version = "0.62", features = [
+    "Data_Xml_Dom",
+    "UI_Notifications",
+    "Foundation",
+    "Win32_Foundation",
+    "Win32_System_WinRT",
+    "Win32_UI_Input",
+    "Win32_UI_Shell"
+] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3.8"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[features]
+custom-protocol = ["tauri/custom-protocol"]

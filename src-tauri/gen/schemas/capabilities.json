@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Default capabilities for ntfy desktop","local":true,"windows":["main","settings","welcome","settings-*"],"permissions":["core:default","shell:allow-open"]}}

@@ -1,0 +1,19 @@
+{
+  "name": "ntfy-desktop-performance-tests",
+  "version": "2026.02.26.1",
+  "description": "Performance testing framework for ntfy.desktop Electron vs Tauri comparison",
+  "type": "module",
+  "scripts": {
+    "verify": "node scripts/verify-setup.js",
+    "quick": "node scripts/quick-test.js",
+    "test:baseline": "node scripts/performance-benchmark.js baseline",
+    "test:comparison": "node scripts/performance-benchmark.js comparison",
+    "test:network": "node scripts/network-resilience.js",
+    "test:startup": "node scripts/startup-benchmark.js",
+    "test:all": "npm run test:baseline && npm run test:comparison && npm run test:network",
+    "report": "node scripts/generate-report.js"
+  },
+  "keywords": ["performance", "testing", "electron", "tauri", "benchmark"],
+  "author": "ntfy.desktop team",
+  "license": "MIT"
+}

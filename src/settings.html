@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary-color: #317f6f;
+      --primary-hover: #338574;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1a1a2e;
+        --bg-secondary: #22223b;
+        --bg-tertiary: #2a2a4a;
+        --text-primary: #e0e0e0;
+        --text-secondary: #a0a0c0;
+        --border-color: #3a3a5c;
+        --card-bg: #22223b;
+        --card-border: #3a3a5c;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+      }
+    }
+    
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-tertiary: #e9ecef;
+        --text-primary: #333333;
+        --text-secondary: #666666;
+        --border-color: #e0e0e0;
+        --card-bg: #ffffff;
+        --card-border: #e0e0e0;
+        --shadow-color: rgba(0, 0, 0, 0.1);
+      }
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .settings-container {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 4px 20px var(--shadow-color);
+      border: 1px solid var(--card-border);
+    }
+    .settings-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .settings-header .brand-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      background: url('./assets/icon/ntfy.png') center/contain no-repeat;
+    }
+    .settings-header h1 {
+      font-size: 2em;
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 8px;
+    }
+    .settings-header p {
+      font-size: 1em;
+      opacity: 0.8;
+      margin: 0;
+    }
+    .settings-content {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 24px;
+      border: 1px solid var(--border-color);
+    }
+    h2 {
+      font-size: 1.1em;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 0.85em;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    input[type="text"], input[type="number"], input[type="url"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.9em;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { 
+      border-color: var(--primary-color);
+    }
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .toggle-row:last-child {
+      border-bottom: none;
+    }
+    .toggle-row span { 
+      font-size: 0.9em;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .toggle {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle .slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border-color);
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle .slider::before {
+      content: "";
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #ffffff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .toggle input:checked + .slider { background: var(--primary-color); }
+    .toggle input:checked + .slider::before { transform: translateX(20px); }
+    .hint {
+      font-size: 0.75em;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+    button {
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-save {
+      background: var(--primary-color);
+      color: #ffffff;
+    }
+    .btn-save:hover { 
+      background: var(--primary-hover);
+    }
+    .btn-cancel {
+      background: var(--border-color);
+      color: var(--text-primary);
+    }
+    .btn-cancel:hover {
+      background: var(--bg-tertiary);
+    }
+    .sound-selector {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .sound-selector select {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      font-size: 0.9em;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .sound-selector select:focus {
+      border-color: var(--primary-color);
+    }
+    .btn-preview {
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.1em;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+    }
+    .btn-preview:hover {
+      background: var(--primary-color);
+      border-color: var(--primary-color);
+    }
+    .btn-preview:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+  <div class="settings-container">
+    <div class="settings-header">
+      <div class="brand-icon"></div>
+      <h1>ntfy.desktop</h1>
+      <p id="page-title">Settings</p>
+      <p style="font-size:0.7em;color:var(--text-secondary);margin-top:8px;" id="build-info">Build: DEV-20250227-1845-DEBUG</p>
+    </div>
+    
+    <div class="settings-content">
+      <div id="page-instance" style="display:none">
+        <h2>Instance Settings</h2>
+        <div class="form-group">
+          <label for="instance_url">Instance URL</label>
+          <input type="url" id="instance_url" placeholder="https://ntfy.sh/app" />
+          <p class="hint">Full URL to the ntfy web UI (e.g. https://ntfy.sh/app or http://localhost:8080/app)</p>
+        </div>
+        <div class="toggle-row">
+          <span>Self-Hosted Instance</span>
+          <label class="toggle"><input type="checkbox" id="self_hosted_instance" /><span class="slider"></span></label>
+        </div>
+        <p class="hint">Enable if connecting to a self-hosted ntfy server</p>
+      </div>
+
+      <div id="page-token" style="display:none">
+        <h2>Authentication</h2>
+        <div class="form-group">
+          <label for="api_token">API Token</label>
+          <input type="text" id="api_token" placeholder="tk_..." />
+          <p class="hint">Bearer token for authenticated ntfy servers</p>
+        </div>
+        <div style="text-align:center; color:var(--text-secondary); font-size:0.8em; margin:16px 0;">— or use username/password —</div>
+        <div class="form-group">
+          <label for="auth_user">Username</label>
+          <input type="text" id="auth_user" placeholder="username" />
+        </div>
+        <div class="form-group">
+          <label for="auth_pass">Password</label>
+          <input type="text" id="auth_pass" placeholder="password" />
+          <p class="hint">If both token and user/pass are set, token takes priority</p>
+        </div>
+      </div>
+
+      <div id="page-notifications" style="display:none">
+        <h2>Notification Settings</h2>
+        <div class="form-group">
+          <label for="poll_rate">Poll Rate (seconds)</label>
+          <input type="number" id="poll_rate" min="5" max="3600" />
+          <p class="hint">How often to check for new messages (5-3600 seconds)</p>
+        </div>
+        <div class="form-group">
+          <label for="datetime_format">Date/Time Format</label>
+          <input type="text" id="datetime_format" placeholder="YYYY-MM-DD hh:mm a" />
+          <p class="hint">Custom date/time format for notifications</p>
+        </div>
+        <div class="form-group">
+          <label for="urgent_priority_threshold">Urgent notification threshold</label>
+          <select id="urgent_priority_threshold" style="width:100%;padding:10px 12px;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);font-size:0.9em;">
+            <option value="1">1 - Min (all notifications are urgent)</option>
+            <option value="2">2 - Low</option>
+            <option value="3">3 - Default</option>
+            <option value="4">4 - High (recommended)</option>
+            <option value="5">5 - Urgent/Max only</option>
+          </select>
+          <p class="hint">Messages at or above this priority are treated as urgent</p>
+        </div>
+
+        <h3 style="margin-top:24px;margin-bottom:16px;font-size:1em;color:var(--text-primary);">Notification Sounds</h3>
+        <div class="form-group">
+          <label for="notification_sound">Standard Sound</label>
+          <div class="sound-selector">
+            <select id="notification_sound">
+              <option value="default">Default</option>
+              <option value="none">None (Silent)</option>
+              <option value="alert">Alert</option>
+              <option value="bell">Bell</option>
+              <option value="chime">Chime</option>
+              <option value="pop">Pop</option>
+            </select>
+            <button type="button" class="btn-preview" onclick="previewSound('notification_sound', false)" title="Preview sound">
+              🔊
+            </button>
+          </div>
+          <p class="hint">Sound for regular priority notifications</p>
+        </div>
+        <div class="form-group">
+          <label for="urgent_notification_sound">Urgent Sound</label>
+          <div class="sound-selector">
+            <select id="urgent_notification_sound">
+              <option value="default">Default</option>
+              <option value="none">None (Silent)</option>
+              <option value="alert">Alert</option>
+              <option value="bell">Bell</option>
+              <option value="chime">Chime</option>
+              <option value="pop">Pop</option>
+            </select>
+            <button type="button" class="btn-preview" onclick="previewSound('urgent_notification_sound', true)" title="Preview urgent sound">
+              🔊
+            </button>
+          </div>
+          <p class="hint">Sound for urgent priority notifications</p>
+        </div>
+
+        <h3 style="margin-top:24px;margin-bottom:16px;font-size:1em;color:var(--text-primary);">Persistence</h3>
+        <div class="form-group">
+          <label for="persistent_notifications_mode">Persistent Notifications</label>
+          <select id="persistent_notifications_mode" style="width:100%;padding:10px 12px;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-secondary);color:var(--text-primary);font-size:0.9em;">
+            <option value="off">Off - Auto-dismiss notifications</option>
+            <option value="all">All - Keep all notifications visible</option>
+            <option value="urgent_only">Urgent Only - Only keep urgent notifications</option>
+          </select>
+          <p class="hint">Keep notifications visible until dismissed</p>
+        </div>
+      </div>
+
+      <div id="page-general" style="display:none">
+        <h2>General Settings</h2>
+        <div class="toggle-row">
+          <span>Start Hidden</span>
+          <label class="toggle"><input type="checkbox" id="start_hidden" /><span class="slider"></span></label>
+        </div>
+        <p class="hint">Start minimized to system tray</p>
+        <div class="toggle-row">
+          <span>Quit on Close</span>
+          <label class="toggle"><input type="checkbox" id="quit_on_close" /><span class="slider"></span></label>
+        </div>
+        <p class="hint">Close button quits the app instead of hiding to tray</p>
+        <div class="toggle-row">
+          <span>Developer Tools</span>
+          <label class="toggle"><input type="checkbox" id="dev_tools" /><span class="slider"></span></label>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-cancel" onclick="closeThisWindow()">Cancel</button>
+        <button class="btn-save" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { invoke } = window.__TAURI__.core;
+
+    const page = new URLSearchParams(window.location.search).get("page") || "instance";
+    const windowLabel = "settings-" + page;
+    let currentConfig = {};
+
+    async function closeThisWindow() {
+      try {
+        await invoke('close_window', { label: windowLabel });
+      } catch (e) {
+        console.error('Failed to close window:', e);
+      }
+    }
+
+    // Set page title based on current page
+    const pageTitles = {
+      instance: "Instance",
+      token: "Authorization",
+      notifications: "Notifications",
+      general: "General"
+    };
+    
+    const pageTitleEl = document.getElementById("page-title");
+    if (pageTitleEl && pageTitles[page]) {
+      pageTitleEl.textContent = pageTitles[page];
+    }
+
+    // Show the relevant page section
+    const pageEl = document.getElementById("page-" + page);
+    if (pageEl) pageEl.style.display = "block";
+
+    // Field mappings per page
+    const TEXT_FIELDS = {
+      instance: ["instance_url"],
+      token: ["api_token", "auth_user", "auth_pass"],
+      notifications: ["poll_rate", "datetime_format", "urgent_priority_threshold", "notification_sound", "urgent_notification_sound", "persistent_notifications_mode"],
+      general: [],
+    };
+    const BOOL_FIELDS = {
+      instance: ["self_hosted_instance"],
+      token: [],
+      notifications: [],
+      general: ["start_hidden", "quit_on_close", "dev_tools"],
+    };
+
+    async function loadSettings() {
+      try {
+        currentConfig = await invoke("load_config");
+        // Populate text/number inputs and selects
+        for (const id of TEXT_FIELDS[page] || []) {
+          const el = document.getElementById(id);
+          if (el && currentConfig[id] !== undefined) {
+            el.value = currentConfig[id];
+          }
+        }
+        // Populate toggles
+        for (const id of BOOL_FIELDS[page] || []) {
+          const el = document.getElementById(id);
+          if (el && currentConfig[id] !== undefined) el.checked = currentConfig[id];
+        }
+      } catch (e) {
+        console.error("Failed to load config:", e);
+      }
+    }
+
+    // Fields that should be saved as strings even though they're in SELECT elements
+    const STRING_SELECT_FIELDS = ["notification_sound", "urgent_notification_sound", "persistent_notifications_mode"];
+
+    async function saveSettings() {
+      // Update config with current page values
+      for (const id of TEXT_FIELDS[page] || []) {
+        const el = document.getElementById(id);
+        if (el) {
+          if (el.type === "number") {
+            currentConfig[id] = parseInt(el.value, 10) || currentConfig[id];
+          } else if (el.tagName === "SELECT" && !STRING_SELECT_FIELDS.includes(id)) {
+            currentConfig[id] = parseInt(el.value, 10) || currentConfig[id];
+          } else {
+            currentConfig[id] = el.value;
+          }
+        }
+      }
+      for (const id of BOOL_FIELDS[page] || []) {
+        const el = document.getElementById(id);
+        if (el) currentConfig[id] = el.checked;
+      }
+
+      try {
+        await invoke("save_config", { config: currentConfig });
+
+        // If instance URL changed, navigate the main window
+        if (page === "instance") {
+          await invoke("navigate_to", { url: currentConfig.instance_url });
+        }
+
+        await closeThisWindow();
+      } catch (e) {
+        console.error("Failed to save config:", e);
+        alert("Failed to save: " + e);
+      }
+    }
+
+    async function previewSound(selectId, isUrgent) {
+      console.log("=== PREVIEW SOUND CLICKED ===", selectId, isUrgent);
+      try {
+        const el = document.getElementById(selectId);
+        if (!el) {
+          console.error("Element not found:", selectId);
+          alert("Error: Sound selector not found!");
+          return;
+        }
+
+        const sound = el.value;
+        console.log("Selected sound:", sound);
+
+        if (sound === "none") {
+          alert("This sound is set to silent (none)");
+          return;
+        }
+
+        console.log("Calling invoke preview_notification_sound...");
+        const result = await invoke("preview_notification_sound", {
+          sound: sound,
+          urgent: isUrgent
+        });
+        console.log("Invoke result:", result);
+        console.log("=== PREVIEW SUCCESS ===");
+      } catch (e) {
+        console.error("=== PREVIEW FAILED ===", e);
+        alert("Failed to preview sound. Check console for details.");
+      }
+    }
+
+    loadSettings();
+  </script>
+</body>
+</html>
