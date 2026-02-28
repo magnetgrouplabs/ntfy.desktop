@@ -35,14 +35,15 @@ jobs:
         with:
           workspaces: "src-tauri -> target"
 
-      - name: Install Windows dependencies
+      - name: Check Windows dependencies
         shell: powershell
         run: |
-          # Install WIX Toolset for MSI generation
-          if (-not (Test-Path "C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe")) {
-            Write-Host "Installing WIX Toolset..."
-            Invoke-WebRequest -Uri "https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311.exe" -OutFile "wix311.exe"
-            Start-Process -FilePath "wix311.exe" -ArgumentList "/quiet" -Wait
+          # Check if WIX Toolset is available
+          Write-Host "Checking WIX Toolset availability..."
+          if (Test-Path "C:\Program Files (x86)\WiX Toolset v3.11\bin\candle.exe") {
+            Write-Host "✓ WIX Toolset is already installed"
+          } else {
+            Write-Host "⚠ WIX Toolset not found - Tauri will use NSIS bundler instead"
           }
 
       - name: Install Tauri CLI via npm
