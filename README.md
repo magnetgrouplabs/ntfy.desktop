@@ -96,4 +96,4 @@ Contributions are welcome. If you're interested in helping out — whether it's 
 
 ## License
 
-MIT License Copyright (c) 2026 Magnet Group Labs
+MIT License Copyright (c) 2026 The Magnet Group LLC
