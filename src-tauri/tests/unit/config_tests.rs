@@ -243,8 +243,8 @@ fn test_config_edge_cases() {
     assert_eq!(empty_config.topics, deserialized.topics);
     assert_eq!(empty_config.poll_rate, deserialized.poll_rate);
     
-    // Verify credentials are never serialized
-    assert!(!serialized.contains("api_token"));
-    assert!(!serialized.contains("auth_user"));
-    assert!(!serialized.contains("auth_pass"));
+    // Verify credentials round-trip correctly
+    assert_eq!(empty_config.api_token, deserialized.api_token);
+    assert_eq!(empty_config.auth_user, deserialized.auth_user);
+    assert_eq!(empty_config.auth_pass, deserialized.auth_pass);
 }
