@@ -93,23 +93,28 @@ async fn save_config(
     config: config::AppConfig,
     app_handle: tauri::AppHandle,
 ) -> Result<(), String> {
-    // Save credentials to OS keychain (not to disk)
+    // Merge incoming credentials with existing keychain values:
+    // empty incoming value = keep existing (prevents non-token pages from wiping creds)
+    let existing = credentials::load_credentials().unwrap_or_default();
     let creds = credentials::Credentials {
-        api_token: config.api_token.clone(),
-        auth_user: config.auth_user.clone(),
-        auth_pass: config.auth_pass.clone(),
+        api_token: if config.api_token.is_empty() { existing.api_token } else { config.api_token.clone() },
+        auth_user: if config.auth_user.is_empty() { existing.auth_user } else { config.auth_user.clone() },
+        auth_pass: if config.auth_pass.is_empty() { existing.auth_pass } else { config.auth_pass.clone() },
     };
     credentials::save_credentials(&creds).map_err(|e| e.to_string())?;
 
-    // Save non-sensitive config to disk (credentials are #[serde(skip)])
+    // Save non-sensitive config to disk (credentials stripped by save_config)
     config::save_config(&app_handle, config.clone())
         .await
         .map_err(|e| e.to_string())?;
 
-    // Update shared runtime config so polling picks up changes immediately
+    // Update shared runtime config with merged credentials so polling picks them up
     if let Some(shared) = app_handle.try_state::<SharedConfig>() {
         let mut locked = shared.0.lock().await;
         *locked = config;
+        locked.api_token = creds.api_token;
+        locked.auth_user = creds.auth_user;
+        locked.auth_pass = creds.auth_pass;
     }
 
     Ok(())
@@ -145,13 +150,14 @@ async fn load_config(app_handle: tauri::AppHandle) -> Result<config::AppConfig, 
     Ok(config)
 }
 
-#[tauri::command]
+#[tauri::command(rename_all = "snake_case")]
 async fn show_notification(
     title: String,
     message: String,
     urgent: Option<bool>,
     sound: Option<String>,
     persistent: Option<bool>,
+    icon_url: Option<String>,
 ) -> Result<(), String> {
     use crate::config::NotificationSound;
 
@@ -164,12 +170,16 @@ async fn show_notification(
         _ => NotificationSound::Default,
     };
 
-    notifications::show_notification(
+    // Filter out empty icon_url strings
+    let icon = icon_url.filter(|s| !s.is_empty());
+
+    notifications::show_notification_with_icon(
         &title,
         &message,
         urgent.unwrap_or(false),
         &sound,
         persistent.unwrap_or(false),
+        icon.as_deref(),
     )
     .await
     .map_err(|e| e.to_string())
@@ -438,12 +448,110 @@ fn main() -> anyhow::Result<()> {
             let is_polling = Arc::new(AtomicBool::new(false));
             let badge_count = Arc::new(AtomicU32::new(0));
 
-            // Window is now created via tauri.conf.json configuration
-            // The main window with label "main" is defined in the config file
-            
-            // Get the window that was created by tauri.conf.json
-            let window = app.get_webview_window("main")
-                .ok_or("Main window not found - check tauri.conf.json configuration")?;
+            // ── Create Main Window ──────────────────────────────────────
+
+            let webview_url = WebviewUrl::External(
+                instance_url
+                    .parse()
+                    .unwrap_or_else(|_| "https://ntfy.sh/app".parse().unwrap()),
+            );
+
+            let window = tauri::WebviewWindowBuilder::new(app, "main", webview_url)
+                .title("ntfy.desktop")
+                .inner_size(1280.0, 720.0)
+                .min_inner_size(400.0, 300.0)
+                .visible(!should_hide && !show_welcome)
+                .center()
+                .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.0")
+                .initialization_script(
+                    // Bridge browser Notification APIs to Rust native notifications via Tauri IPC.
+                    //
+                    // The ntfy web UI uses ServiceWorkerRegistration.showNotification() to display
+                    // notifications. We override both that and window.Notification to intercept
+                    // all notification attempts and forward them to the Rust `show_notification`
+                    // command via Tauri IPC, which displays native OS toasts.
+                    //
+                    // We also report Notification.permission as "granted" so the ntfy web UI
+                    // never shows a "Notifications are blocked" banner.
+                    r#"
+                    (function() {
+                        // Find the best available Tauri IPC invoke function
+                        function getInvoke() {
+                            if (window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke) {
+                                return window.__TAURI_INTERNALS__.invoke;
+                            }
+                            if (window.__TAURI__ && window.__TAURI__.core && window.__TAURI__.core.invoke) {
+                                return window.__TAURI__.core.invoke;
+                            }
+                            return null;
+                        }
+
+                        function sendNativeNotification(title, body, iconUrl) {
+                            var invoke = getInvoke();
+                            if (invoke) {
+                                var args = {
+                                    title: title || 'ntfy',
+                                    message: body || ''
+                                };
+                                if (iconUrl) {
+                                    args.icon_url = iconUrl;
+                                }
+                                invoke('show_notification', args).catch(function(err) {
+                                    console.error('ntfy.desktop: Failed to show native notification:', err);
+                                });
+                            } else {
+                                console.warn('ntfy.desktop: No Tauri IPC available');
+                            }
+                        }
+
+                        // Override window.Notification (constructor-based API)
+                        function NativeNotification(title, options) {
+                            this.title = title;
+                            this.body = (options && options.body) || "";
+                            var icon = "";
+                            if (options && options.data && options.data.message && options.data.message.icon) {
+                                icon = options.data.message.icon;
+                            }
+                            sendNativeNotification(title, this.body, icon);
+                        }
+                        NativeNotification.permission = "granted";
+                        NativeNotification.requestPermission = function(cb) {
+                            var p = Promise.resolve("granted");
+                            if (cb) cb("granted");
+                            return p;
+                        };
+                        NativeNotification.prototype.close = function() {};
+                        NativeNotification.prototype.addEventListener = function() {};
+                        NativeNotification.prototype.removeEventListener = function() {};
+                        window.Notification = NativeNotification;
+
+                        // Override ServiceWorkerRegistration.showNotification
+                        // This is what the ntfy web UI actually calls (Notifier.js)
+                        if (typeof ServiceWorkerRegistration !== 'undefined') {
+                            ServiceWorkerRegistration.prototype.showNotification = function(title, options) {
+                                // The message icon URL is in options.data.message.icon, not options.icon
+                                // options.icon is always the static ntfy logo
+                                var icon = "";
+                                if (options && options.data && options.data.message && options.data.message.icon) {
+                                    icon = options.data.message.icon;
+                                }
+                                sendNativeNotification(title, (options && options.body) || "", icon);
+                                return Promise.resolve();
+                            };
+                        }
+
+                        // Also ensure getNotifications resolves to empty (prevents stale reads)
+                        if (typeof ServiceWorkerRegistration !== 'undefined') {
+                            ServiceWorkerRegistration.prototype.getNotifications = function() {
+                                return Promise.resolve([]);
+                            };
+                        }
+
+                        console.log("ntfy.desktop: Notification API bridged to native toasts");
+                    })();
+                    "#,
+                )
+                .build()?;
 
             // Open devtools if --devtools flag was passed (debug builds only)
             #[cfg(debug_assertions)]

@@ -172,7 +172,7 @@ impl NtfyClient {
 pub async fn start_polling(
     app_handle: AppHandle,
     client: Arc<Mutex<NtfyClient>>,
-    notification_manager: Arc<Mutex<NotificationManager>>,
+    _notification_manager: Arc<Mutex<NotificationManager>>,
     config: Arc<Mutex<AppConfig>>,
     is_polling: Arc<AtomicBool>,
 ) {
@@ -311,10 +311,9 @@ pub async fn start_polling(
                         icon_url: msg.icon.clone(),
                     };
 
-                    let nm = notification_manager.lock().await;
-                    if let Err(e) = nm.show_notification_full(&notification_data).await {
-                        eprintln!("Failed to show notification: {}", e);
-                    }
+                    // Native notifications are now handled by the web UI's Notification API bridge
+                    // (see initialization_script in main.rs). Polling loop only tracks badge counts.
+                    let _ = notification_data;
 
                     // Emit event for badge count tracking
                     let _ = app_handle.emit("new-notification", &msg);

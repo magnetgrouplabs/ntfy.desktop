@@ -39,11 +39,11 @@ impl Default for NotificationSound {
 #[serde(default)]
 pub struct AppConfig {
     pub instance_url: String,
-    #[serde(skip_serializing, default)]
+    #[serde(default)]
     pub api_token: String,
-    #[serde(skip_serializing, default)]
+    #[serde(default)]
     pub auth_user: String,
-    #[serde(skip_serializing, default)]
+    #[serde(default)]
     pub auth_pass: String,
     pub topics: String,
     pub poll_rate: u64,
@@ -146,7 +146,14 @@ pub async fn save_config(app_handle: &AppHandle, config: AppConfig) -> Result<()
     }
 
     let config_path = app_dir.join("prefs.json");
-    let config_json = serde_json::to_string_pretty(&config)
+
+    // Clone and clear credentials before writing to disk (they live in the OS keychain)
+    let mut disk_config = config.clone();
+    disk_config.api_token = String::new();
+    disk_config.auth_user = String::new();
+    disk_config.auth_pass = String::new();
+
+    let config_json = serde_json::to_string_pretty(&disk_config)
         .map_err(|e| anyhow::anyhow!("Failed to serialize config: {}", e))?;
 
     tokio::fs::write(&config_path, config_json).await
@@ -238,19 +245,19 @@ mod tests {
         let serialized = serde_json::to_string(&config)
             .expect("Failed to serialize config for test");
 
-        // Credentials should NOT appear in serialized JSON (stored in OS keychain)
-        assert!(!serialized.contains("test-token"));
-        assert!(!serialized.contains("testuser"));
-        assert!(!serialized.contains("testpass"));
+        // Credentials now serialize (for IPC to JS) — disk writes strip them separately
+        assert!(serialized.contains("test-token"));
+        assert!(serialized.contains("testuser"));
+        assert!(serialized.contains("testpass"));
 
         let deserialized: AppConfig = serde_json::from_str(&serialized)
             .expect("Failed to deserialize config for test");
 
         assert_eq!(config.instance_url, deserialized.instance_url);
-        // Credentials are skip_serializing so they round-trip as empty
-        assert_eq!(deserialized.api_token, "");
-        assert_eq!(deserialized.auth_user, "");
-        assert_eq!(deserialized.auth_pass, "");
+        // Credentials round-trip correctly now
+        assert_eq!(deserialized.api_token, "test-token");
+        assert_eq!(deserialized.auth_user, "testuser");
+        assert_eq!(deserialized.auth_pass, "testpass");
         assert_eq!(config.topics, deserialized.topics);
         assert_eq!(config.poll_rate, deserialized.poll_rate);
         assert_eq!(config.datetime_format, deserialized.datetime_format);
@@ -469,10 +476,10 @@ mod tests {
         assert_eq!(empty_config.topics, deserialized.topics);
         assert_eq!(empty_config.poll_rate, deserialized.poll_rate);
 
-        // Credentials should never appear in serialized output
-        assert!(!serialized.contains("api_token"));
-        assert!(!serialized.contains("auth_user"));
-        assert!(!serialized.contains("auth_pass"));
+        // Credentials now serialize (for IPC); disk writes strip them separately
+        assert!(serialized.contains("api_token"));
+        assert!(serialized.contains("auth_user"));
+        assert!(serialized.contains("auth_pass"));
 
         // Test with special characters
         let special_config = AppConfig {

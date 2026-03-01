@@ -382,12 +382,16 @@ impl NotificationManager {
                     eprintln!("WARNING: Failed to parse Accept header, using default");
                 }
                 
+                if let Ok(origin_header) = "https://ntfy.sh".parse() {
+                    headers.insert(reqwest::header::ORIGIN, origin_header);
+                }
+
                 if let Ok(referer_header) = "https://ntfy.sh/".parse() {
                     headers.insert(reqwest::header::REFERER, referer_header);
                 } else {
                     eprintln!("WARNING: Failed to parse Referer header, using default");
                 }
-                
+
                 if let Ok(language_header) = "en-US,en;q=0.9".parse() {
                     headers.insert(reqwest::header::ACCEPT_LANGUAGE, language_header);
                 } else {
@@ -507,3 +511,27 @@ pub async fn show_notification(
     let manager = NotificationManager::new();
     manager.show_notification(title, message, urgent, sound, persistent).await
 }
+
+pub async fn show_notification_with_icon(
+    title: &str,
+    message: &str,
+    urgent: bool,
+    sound: &NotificationSound,
+    persistent: bool,
+    icon_url: Option<&str>,
+) -> Result<()> {
+    let manager = NotificationManager::new();
+    let data = NotificationData {
+        title: title.to_string(),
+        subtitle: None,
+        message: message.to_string(),
+        topic: title.to_string(),
+        timestamp: 0,
+        urgent,
+        sound: sound.clone(),
+        persistent,
+        icon_url: icon_url.map(|s| s.to_string()),
+    };
+    manager.show_notification_full(&data).await
+}
+
