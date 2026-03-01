@@ -1,6 +1,6 @@
 [package]
 name = "ntfy-desktop"
-version = "26.2.2"
+version = "26.2.7"
 description = "A high-performance desktop notification client for ntfy"
 authors = ["Anthony"]
 license = "MIT"

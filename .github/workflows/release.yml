@@ -40,7 +40,7 @@ jobs:
   build-windows:
     name: Build Windows App
     permissions:
-      contents: read
+      contents: write
     runs-on: windows-latest
     needs: [create-release]
     steps:
@@ -68,16 +68,11 @@ jobs:
       - name: Build Tauri application
         run: npm run tauri:build
 
-      - name: Upload MSI installer
+      - name: Upload Windows installers
         uses: softprops/action-gh-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          files: src-tauri/target/release/bundle/msi/ntfy.desktop_26.2.6_x64_en-US.msi
-
-      - name: Upload portable executable
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: src-tauri/target/release/bundle/nsis/ntfy.desktop_26.2.6_x64-setup.exe
+          files: |
+            src-tauri/target/release/bundle/**/*
+            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*
