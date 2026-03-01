@@ -361,6 +361,11 @@ async fn test_notification() -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+fn get_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
 // ── Application Entry Point ─────────────────────────────────────────────────
 
 fn main() -> anyhow::Result<()> {
@@ -428,7 +433,8 @@ fn main() -> anyhow::Result<()> {
             navigate_to,
             complete_welcome,
             close_window,
-            test_notification
+            test_notification,
+            get_version
         ])
         .setup(move |app| {
             let app_handle = app.handle().clone();

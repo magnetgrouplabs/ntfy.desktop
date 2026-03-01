@@ -20,11 +20,13 @@ jobs:
           body: |
             ## Windows Desktop Client for ntfy
 
-            ### Installation
+            ### Downloads
 
-            Download the Windows installer:
-            - **Installer**: `.msi` file for standard installation
-            - **Portable**: `.exe` file for portable use (no installation required)
+            | File | Description |
+            |------|-------------|
+            | `ntfy.desktop_*_x64-setup.exe` | **Installer** (NSIS) — installs to Program Files with Start Menu shortcut |
+            | `ntfy.desktop_*_x64_en-US.msi` | **Installer** (MSI) — standard Windows Installer package |
+            | `ntfy.desktop_*_portable.exe` | **Portable** — standalone exe, no installation required |
 
             ### Features
             - High-performance desktop notifications
@@ -68,6 +70,17 @@ jobs:
       - name: Build Tauri application
         run: npm run tauri:build
 
+      - name: Prepare portable exe
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          $srcExe = "src-tauri/target/release/ntfy-desktop.exe"
+          if (Test-Path $srcExe) {
+            Copy-Item $srcExe "ntfy.desktop_${version}_portable.exe"
+          } else {
+            Write-Warning "Release exe not found at $srcExe"
+          }
+
       - name: Upload Windows installers
         uses: softprops/action-gh-release@v1
         env:
@@ -76,3 +89,4 @@ jobs:
           files: |
             src-tauri/target/release/bundle/**/*
             src-tauri/target/x86_64-pc-windows-msvc/release/bundle/**/*
+            ntfy.desktop_*_portable.exe

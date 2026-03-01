@@ -1,6 +1,6 @@
 {
   "name": "ntfy.desktop",
-  "version": "26.3.0",
+  "version": "26.3.1",
   "description": "A high-performance desktop notification client for ntfy, built with Tauri",
   "type": "module",
   "scripts": {
@@ -17,7 +17,8 @@
     "build:linux": "bash scripts/build-linux.sh",
     "build:macos": "bash scripts/build-macos.sh",
     "build:all": "npm run build:windows && npm run build:linux && npm run build:macos",
-    "release": "bash scripts/release.sh"
+    "release": "bash scripts/release.sh",
+    "bump": "bash scripts/bump-version.sh"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0"
