@@ -248,6 +248,39 @@
     .btn-preview:active {
       transform: scale(0.95);
     }
+    .btn-test {
+      padding: 10px 20px;
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 0.9em;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-test:hover {
+      background: var(--primary-color);
+      color: #ffffff;
+      border-color: var(--primary-color);
+    }
+    .btn-test:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .btn-test.success {
+      background: #2e7d32;
+      color: #ffffff;
+      border-color: #2e7d32;
+    }
+    .btn-test.error {
+      background: #c62828;
+      color: #ffffff;
+      border-color: #c62828;
+    }
   </style>
 </head>
 <body>
@@ -272,6 +305,12 @@
           <label class="toggle"><input type="checkbox" id="self_hosted_instance" /><span class="slider"></span></label>
         </div>
         <p class="hint">Enable if connecting to a self-hosted ntfy server</p>
+        <div class="actions" style="margin-top:20px;padding-top:0;border-top:none;">
+          <button type="button" class="btn-test" onclick="testConnection()" id="test-btn">
+            <span id="test-btn-text">Test Connection</span>
+            <span id="test-btn-status" style="margin-left:8px;display:none;"></span>
+          </button>
+        </div>
       </div>
 
       <div id="page-token" style="display:none">
@@ -531,6 +570,81 @@
       } catch (e) {
         console.error("=== PREVIEW FAILED ===", e);
         alert("Failed to preview sound. Check console for details.");
+      }
+    }
+
+    async function testConnection() {
+      const btn = document.getElementById("test-btn");
+      const btnText = document.getElementById("test-btn-text");
+      const btnStatus = document.getElementById("test-btn-status");
+
+      // Reset button state
+      btn.className = "btn-test";
+      btnStatus.style.display = "none";
+
+      // Get instance URL from the form
+      const instanceUrl = document.getElementById("instance_url").value.trim();
+
+      // Get credentials from form if visible, otherwise from saved config
+      const apiTokenEl = document.getElementById("api_token");
+      const authUserEl = document.getElementById("auth_user");
+      const authPassEl = document.getElementById("auth_pass");
+
+      const apiToken = apiTokenEl ? (apiTokenEl.value?.trim() || "") : (currentConfig.api_token || "");
+      const authUser = authUserEl ? (authUserEl.value?.trim() || "") : (currentConfig.auth_user || "");
+      const authPass = authPassEl ? (authPassEl.value?.trim() || "") : (currentConfig.auth_pass || "");
+
+      if (!instanceUrl) {
+        btn.className = "btn-test error";
+        btnText.textContent = "Test Connection";
+        btnStatus.textContent = "✗";
+        btnStatus.style.display = "inline";
+        return;
+      }
+
+      // Show testing state
+      btn.disabled = true;
+      btnText.textContent = "Testing...";
+      btnStatus.style.display = "none";
+
+      try {
+        const result = await invoke("test_ntfy_connection", {
+          server_url: instanceUrl,
+          topic: "announcements",
+          api_token: apiToken || null,
+          auth_user: authUser || null,
+          auth_pass: authPass || null
+        });
+
+        // Success
+        btn.disabled = false;
+        btn.className = "btn-test success";
+        btnText.textContent = "Connected!";
+        btnStatus.textContent = "✓";
+        btnStatus.style.display = "inline";
+
+        // Reset after 3 seconds
+        setTimeout(() => {
+          btn.className = "btn-test";
+          btnText.textContent = "Test Connection";
+          btnStatus.style.display = "none";
+        }, 3000);
+
+      } catch (e) {
+        // Error
+        btn.disabled = false;
+        btn.className = "btn-test error";
+        btnText.textContent = "Connection Failed";
+        btnStatus.textContent = "✗";
+        btnStatus.style.display = "inline";
+        console.error("Connection test failed:", e);
+
+        // Reset after 3 seconds
+        setTimeout(() => {
+          btn.className = "btn-test";
+          btnText.textContent = "Test Connection";
+          btnStatus.style.display = "none";
+        }, 3000);
       }
     }
 
