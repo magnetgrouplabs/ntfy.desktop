@@ -1,9 +1,9 @@
 ---
-status: complete
+status: resolved
 phase: 01-settings-ui-fixes
-source: [01-SUMMARY.md]
+source: [01-SUMMARY.md, 02-SUMMARY.md]
 started: 2026-03-04T17:30:00Z
-updated: 2026-03-04T17:40:00Z
+updated: 2026-03-04T19:00:00Z
 ---
 
 ## Current Test
@@ -49,21 +49,31 @@ skipped: 4
 ## Gaps
 
 - truth: "Settings is a single scrolling page with all sections visible"
-  status: failed
+  status: resolved
   reason: "User reported: Settings is a mess with multiple separate pages. Want single scrolling page with all settings in sections (Instance, Auth, Notifications, General)."
   severity: blocker
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "HTML has 4 separate page divs (page-instance, page-token, page-notifications, page-general) shown/hidden via ?page= URL param. Menu has 4 separate menu items. Need to consolidate into single page with all sections visible."
+  artifacts:
+    - path: "src/settings.html"
+      issue: "Multiple page divs with style='display:none' toggled by URL param"
+    - path: "src-tauri/src/main.rs"
+      issue: "4 separate menu items (settings-instance, settings-token, settings-notifications, settings-general)"
+  missing:
+    - "Consolidate all page divs into single scrolling layout"
+    - "Replace 4 menu items with single 'Settings' menu item"
+    - "Remove ?page= URL parameter logic"
   debug_session: ""
 
 - truth: "Test Credentials button works after entering credentials"
-  status: failed
+  status: resolved
   reason: "User reported: Test Connection button is under URL on Instance page and does nothing. Should be after credentials are entered on the same page."
   severity: blocker
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Test Credentials button on Authorization page requires instance_url which is on separate Instance page. User must configure instance on one page, then go to another page to test credentials."
+  artifacts:
+    - path: "src/settings.html"
+      issue: "testConnection() reads instance_url from currentConfig but page doesn't show instance_url field"
+  missing:
+    - "Consolidate settings into single page so instance_url and credentials are together"
   debug_session: ""
