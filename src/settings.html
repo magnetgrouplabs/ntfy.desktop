@@ -24,7 +24,7 @@
         --shadow-color: rgba(0, 0, 0, 0.3);
       }
     }
-    
+
     @media (prefers-color-scheme: light) {
       :root {
         --bg-primary: #ffffff;
@@ -84,6 +84,20 @@
       padding: 24px;
       border: 1px solid var(--border-color);
     }
+    .settings-section {
+      margin-bottom: 32px;
+    }
+    .settings-section:last-child {
+      margin-bottom: 0;
+    }
+    .settings-section h2 {
+      font-size: 1.1em;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 8px;
+    }
     h2 {
       font-size: 1.1em;
       font-weight: 600;
@@ -125,7 +139,7 @@
       outline: none;
       transition: border-color 0.2s;
     }
-    input:focus { 
+    input:focus {
       border-color: var(--primary-color);
     }
     .toggle-row {
@@ -138,7 +152,7 @@
     .toggle-row:last-child {
       border-bottom: none;
     }
-    .toggle-row span { 
+    .toggle-row span {
       font-size: 0.9em;
       color: var(--text-primary);
       font-weight: 500;
@@ -199,7 +213,7 @@
       background: var(--primary-color);
       color: #ffffff;
     }
-    .btn-save:hover { 
+    .btn-save:hover {
       background: var(--primary-hover);
     }
     .btn-cancel {
@@ -299,6 +313,11 @@
       color: #ef5350;
       border: 1px solid rgba(198, 40, 40, 0.3);
     }
+    .section-divider {
+      border: none;
+      border-top: 1px solid var(--border-color);
+      margin: 24px 0;
+    }
   </style>
 </head>
 <body>
@@ -306,13 +325,14 @@
     <div class="settings-header">
       <div class="brand-icon"></div>
       <h1>ntfy.desktop</h1>
-      <p id="page-title">Settings</p>
+      <p>Settings</p>
       <p style="font-size:0.7em;color:var(--text-secondary);margin-top:8px;" id="build-info">Loading version...</p>
     </div>
-    
+
     <div class="settings-content">
-      <div id="page-instance" style="display:none">
-        <h2>Instance Settings</h2>
+      <!-- Instance Section -->
+      <div class="settings-section">
+        <h2>Instance</h2>
         <div class="form-group">
           <label for="instance_url">Instance URL</label>
           <input type="url" id="instance_url" placeholder="https://ntfy.sh/app" />
@@ -325,7 +345,10 @@
         <p class="hint">Enable if connecting to a self-hosted ntfy server</p>
       </div>
 
-      <div id="page-token" style="display:none">
+      <hr class="section-divider" />
+
+      <!-- Authentication Section -->
+      <div class="settings-section">
         <h2>Authentication</h2>
         <div class="form-group">
           <label for="api_token">API Token</label>
@@ -351,8 +374,11 @@
         <div id="test-result" class="test-result" style="display:none;"></div>
       </div>
 
-      <div id="page-notifications" style="display:none">
-        <h2>Notification Settings</h2>
+      <hr class="section-divider" />
+
+      <!-- Notifications Section -->
+      <div class="settings-section">
+        <h2>Notifications</h2>
         <div class="form-group">
           <label for="poll_rate">Poll Rate (seconds)</label>
           <input type="number" id="poll_rate" min="5" max="3600" />
@@ -423,8 +449,11 @@
         </div>
       </div>
 
-      <div id="page-general" style="display:none">
-        <h2>General Settings</h2>
+      <hr class="section-divider" />
+
+      <!-- General Section -->
+      <div class="settings-section">
+        <h2>General</h2>
         <div class="toggle-row">
           <span>Start Hidden</span>
           <label class="toggle"><input type="checkbox" id="start_hidden" /><span class="slider"></span></label>
@@ -451,8 +480,6 @@
   <script>
     const { invoke } = window.__TAURI__.core;
 
-    const page = new URLSearchParams(window.location.search).get("page") || "instance";
-    const windowLabel = "settings-" + page;
     let currentConfig = {};
 
     async function closeThisWindow() {
@@ -464,36 +491,30 @@
       }
     }
 
-    // Set page title based on current page
-    const pageTitles = {
-      instance: "Instance",
-      token: "Authorization",
-      notifications: "Notifications",
-      general: "General"
-    };
-    
-    const pageTitleEl = document.getElementById("page-title");
-    if (pageTitleEl && pageTitles[page]) {
-      pageTitleEl.textContent = pageTitles[page];
-    }
+    // All text/number/select fields (consolidated from all pages)
+    const TEXT_FIELDS = [
+      "instance_url",
+      "api_token",
+      "auth_user",
+      "auth_pass",
+      "poll_rate",
+      "datetime_format",
+      "urgent_priority_threshold",
+      "notification_sound",
+      "urgent_notification_sound",
+      "persistent_notifications_mode"
+    ];
 
-    // Show the relevant page section
-    const pageEl = document.getElementById("page-" + page);
-    if (pageEl) pageEl.style.display = "block";
+    // All boolean toggle fields (consolidated from all pages)
+    const BOOL_FIELDS = [
+      "self_hosted_instance",
+      "start_hidden",
+      "quit_on_close",
+      "dev_tools"
+    ];
 
-    // Field mappings per page
-    const TEXT_FIELDS = {
-      instance: ["instance_url"],
-      token: ["api_token", "auth_user", "auth_pass"],
-      notifications: ["poll_rate", "datetime_format", "urgent_priority_threshold", "notification_sound", "urgent_notification_sound", "persistent_notifications_mode"],
-      general: [],
-    };
-    const BOOL_FIELDS = {
-      instance: ["self_hosted_instance"],
-      token: [],
-      notifications: [],
-      general: ["start_hidden", "quit_on_close", "dev_tools"],
-    };
+    // Fields that should be saved as strings even though they're in SELECT elements
+    const STRING_SELECT_FIELDS = ["notification_sound", "urgent_notification_sound", "persistent_notifications_mode"];
 
     async function loadSettings() {
       try {
@@ -507,15 +528,16 @@
         }
 
         currentConfig = await invoke("load_config");
+
         // Populate text/number inputs and selects
-        for (const id of TEXT_FIELDS[page] || []) {
+        for (const id of TEXT_FIELDS) {
           const el = document.getElementById(id);
           if (el && currentConfig[id] !== undefined) {
             el.value = currentConfig[id];
           }
         }
         // Populate toggles
-        for (const id of BOOL_FIELDS[page] || []) {
+        for (const id of BOOL_FIELDS) {
           const el = document.getElementById(id);
           if (el && currentConfig[id] !== undefined) el.checked = currentConfig[id];
         }
@@ -524,12 +546,9 @@
       }
     }
 
-    // Fields that should be saved as strings even though they're in SELECT elements
-    const STRING_SELECT_FIELDS = ["notification_sound", "urgent_notification_sound", "persistent_notifications_mode"];
-
     async function saveSettings() {
-      // Update config with current page values
-      for (const id of TEXT_FIELDS[page] || []) {
+      // Update config with all form values
+      for (const id of TEXT_FIELDS) {
         const el = document.getElementById(id);
         if (el) {
           if (el.type === "number") {
@@ -541,7 +560,7 @@
           }
         }
       }
-      for (const id of BOOL_FIELDS[page] || []) {
+      for (const id of BOOL_FIELDS) {
         const el = document.getElementById(id);
         if (el) currentConfig[id] = el.checked;
       }
@@ -549,10 +568,8 @@
       try {
         await invoke("save_config", { config: currentConfig });
 
-        // If instance URL changed, navigate the main window
-        if (page === "instance") {
-          await invoke("navigate_to", { url: currentConfig.instance_url });
-        }
+        // Navigate main window to the new instance URL
+        await invoke("navigate_to", { url: currentConfig.instance_url });
 
         await closeThisWindow();
       } catch (e) {
@@ -610,10 +627,11 @@
       btnStatus.style.display = "none";
       if (resultDiv) resultDiv.style.display = "none";
 
-      // Get instance URL from saved config (it's not on the token page)
-      const instanceUrl = (currentConfig.instance_url || "").trim();
+      // Get instance URL from form field (now on same page)
+      const instanceUrlEl = document.getElementById("instance_url");
+      const instanceUrl = (instanceUrlEl ? instanceUrlEl.value : currentConfig.instance_url || "").trim();
 
-      // Get credentials from form if visible, otherwise from saved config
+      // Get credentials from form
       const apiTokenEl = document.getElementById("api_token");
       const authUserEl = document.getElementById("auth_user");
       const authPassEl = document.getElementById("auth_pass");
@@ -628,7 +646,7 @@
         btnStatus.textContent = "✗";
         btnStatus.style.display = "inline";
         if (resultDiv) {
-          resultDiv.textContent = "Please configure an instance URL in Instance settings first.";
+          resultDiv.textContent = "Please enter an instance URL above.";
           resultDiv.className = "test-result error";
           resultDiv.style.display = "block";
         }
