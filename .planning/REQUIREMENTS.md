@@ -7,17 +7,17 @@
 
 ### Settings Window
 
-- [ ] **SETT-01**: User can click Save and the Settings window closes automatically
-- [ ] **SETT-02**: User can test ntfy instance credentials with success/error indicator
+- [x] **SETT-01**: User can click Save and the Settings window closes automatically
+- [x] **SETT-02**: User can test ntfy instance credentials with success/error indicator
 
 ### Persistence
 
-- [ ] **PERS-01**: Settings credentials load when reopening the Settings window
+- [x] **PERS-01**: Settings credentials load when reopening the Settings window
 
 ### UI Layout
 
-- [ ] **LAYOUT-01**: General settings page shows start_hidden, quit_on_close, dev_tools toggles only
-- [ ] **LAYOUT-02**: Notification settings page shows poll_rate, datetime_format, sounds, persistence settings only
+- [x] **LAYOUT-01**: General settings page shows start_hidden, quit_on_close, dev_tools toggles only
+- [x] **LAYOUT-02**: Notification settings page shows poll_rate, datetime_format, sounds, persistence settings only
 
 ## Out of Scope
 
@@ -31,16 +31,18 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETT-01 | Phase 1 | Pending |
-| SETT-02 | Phase 1 | Pending |
-| PERS-01 | Phase 1 | Pending |
-| LAYOUT-01 | Phase 1 | Pending |
-| LAYOUT-02 | Phase 1 | Pending |
+| SETT-01 | Phase 1 | Complete |
+| SETT-02 | Phase 1 | Complete |
+| PERS-01 | Phase 1 | Complete |
+| LAYOUT-01 | Phase 1 | Complete |
+| LAYOUT-02 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 5 total
 - Mapped to phases: 5
 - Unmapped: 0 ✓
+- Completed: 5/5 (100%)
 
 ---
 *Requirements defined: 2026-03-04*
+*All requirements completed: 2026-03-04*
