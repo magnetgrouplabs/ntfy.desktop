@@ -305,12 +305,6 @@
           <label class="toggle"><input type="checkbox" id="self_hosted_instance" /><span class="slider"></span></label>
         </div>
         <p class="hint">Enable if connecting to a self-hosted ntfy server</p>
-        <div class="actions" style="margin-top:20px;padding-top:0;border-top:none;">
-          <button type="button" class="btn-test" onclick="testConnection()" id="test-btn">
-            <span id="test-btn-text">Test Connection</span>
-            <span id="test-btn-status" style="margin-left:8px;display:none;"></span>
-          </button>
-        </div>
       </div>
 
       <div id="page-token" style="display:none">
@@ -329,6 +323,12 @@
           <label for="auth_pass">Password</label>
           <input type="password" id="auth_pass" placeholder="password" />
           <p class="hint">If both token and user/pass are set, token takes priority</p>
+        </div>
+        <div class="actions" style="margin-top:20px;padding-top:0;border-top:none;">
+          <button type="button" class="btn-test" onclick="testConnection()" id="test-btn">
+            <span id="test-btn-text">Test Credentials</span>
+            <span id="test-btn-status" style="margin-left:8px;display:none;"></span>
+          </button>
         </div>
       </div>
 

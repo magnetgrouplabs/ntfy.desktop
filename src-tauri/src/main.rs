@@ -852,7 +852,7 @@ fn create_app_menu(app: &tauri::AppHandle) -> Result<tauri::menu::Menu<tauri::Wr
         MenuItemBuilder::with_id("settings-instance", "Instance URL").build(app)?;
     let auth_item = MenuItemBuilder::with_id("settings-token", "Authorization").build(app)?;
     let notification_settings_item =
-        MenuItemBuilder::with_id("settings-notifications", "Notification Settings").build(app)?;
+        MenuItemBuilder::with_id("settings-notifications", "Notifications").build(app)?;
     let general_settings_item =
         MenuItemBuilder::with_id("settings-general", "General").build(app)?;
 
