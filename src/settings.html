@@ -281,6 +281,24 @@
       color: #ffffff;
       border-color: #c62828;
     }
+    .test-result {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      line-height: 1.4;
+      display: none;
+    }
+    .test-result.success {
+      background: rgba(46, 125, 50, 0.15);
+      color: #4caf50;
+      border: 1px solid rgba(46, 125, 50, 0.3);
+    }
+    .test-result.error {
+      background: rgba(198, 40, 40, 0.15);
+      color: #ef5350;
+      border: 1px solid rgba(198, 40, 40, 0.3);
+    }
   </style>
 </head>
 <body>
@@ -330,6 +348,7 @@
             <span id="test-btn-status" style="margin-left:8px;display:none;"></span>
           </button>
         </div>
+        <div id="test-result" class="test-result" style="display:none;"></div>
       </div>
 
       <div id="page-notifications" style="display:none">
@@ -573,17 +592,26 @@
       }
     }
 
+    // Helper to escape HTML for safe error display
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
     async function testConnection() {
       const btn = document.getElementById("test-btn");
       const btnText = document.getElementById("test-btn-text");
       const btnStatus = document.getElementById("test-btn-status");
+      const resultDiv = document.getElementById("test-result");
 
       // Reset button state
       btn.className = "btn-test";
       btnStatus.style.display = "none";
+      if (resultDiv) resultDiv.style.display = "none";
 
-      // Get instance URL from the form
-      const instanceUrl = document.getElementById("instance_url").value.trim();
+      // Get instance URL from saved config (it's not on the token page)
+      const instanceUrl = (currentConfig.instance_url || "").trim();
 
       // Get credentials from form if visible, otherwise from saved config
       const apiTokenEl = document.getElementById("api_token");
@@ -596,9 +624,14 @@
 
       if (!instanceUrl) {
         btn.className = "btn-test error";
-        btnText.textContent = "Test Connection";
+        btnText.textContent = "No Instance URL";
         btnStatus.textContent = "✗";
         btnStatus.style.display = "inline";
+        if (resultDiv) {
+          resultDiv.textContent = "Please configure an instance URL in Instance settings first.";
+          resultDiv.className = "test-result error";
+          resultDiv.style.display = "block";
+        }
         return;
       }
 
@@ -622,12 +655,18 @@
         btnText.textContent = "Connected!";
         btnStatus.textContent = "✓";
         btnStatus.style.display = "inline";
+        if (resultDiv) {
+          resultDiv.textContent = "Successfully connected to " + escapeHtml(instanceUrl);
+          resultDiv.className = "test-result success";
+          resultDiv.style.display = "block";
+        }
 
         // Reset after 3 seconds
         setTimeout(() => {
           btn.className = "btn-test";
-          btnText.textContent = "Test Connection";
+          btnText.textContent = "Test Credentials";
           btnStatus.style.display = "none";
+          if (resultDiv) resultDiv.style.display = "none";
         }, 3000);
 
       } catch (e) {
@@ -638,13 +677,19 @@
         btnStatus.textContent = "✗";
         btnStatus.style.display = "inline";
         console.error("Connection test failed:", e);
+        if (resultDiv) {
+          resultDiv.textContent = escapeHtml(String(e));
+          resultDiv.className = "test-result error";
+          resultDiv.style.display = "block";
+        }
 
-        // Reset after 3 seconds
+        // Reset after 5 seconds (longer for error messages)
         setTimeout(() => {
           btn.className = "btn-test";
-          btnText.textContent = "Test Connection";
+          btnText.textContent = "Test Credentials";
           btnStatus.style.display = "none";
-        }, 3000);
+          if (resultDiv) resultDiv.style.display = "none";
+        }, 5000);
       }
     }
 
