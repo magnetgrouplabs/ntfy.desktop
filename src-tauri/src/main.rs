@@ -848,19 +848,13 @@ fn create_app_menu(app: &tauri::AppHandle) -> Result<tauri::menu::Menu<tauri::Wr
 
     // ── Settings Menu ──────────────────────────────────────────────────────
 
-    let instance_settings_item =
-        MenuItemBuilder::with_id("settings-instance", "Instance URL").build(app)?;
-    let auth_item = MenuItemBuilder::with_id("settings-token", "Authorization").build(app)?;
-    let notification_settings_item =
-        MenuItemBuilder::with_id("settings-notifications", "Notifications").build(app)?;
-    let general_settings_item =
-        MenuItemBuilder::with_id("settings-general", "General").build(app)?;
+    let settings_item =
+        MenuItemBuilder::with_id("settings", "Settings")
+        .accelerator(if cfg!(target_os = "macos") { "Cmd+," } else { "Ctrl+," })
+        .build(app)?;
 
     let settings_menu = SubmenuBuilder::new(app, "Settings")
-        .item(&instance_settings_item)
-        .item(&auth_item)
-        .item(&notification_settings_item)
-        .item(&general_settings_item)
+        .item(&settings_item)
         .build()?;
 
     // ── Build Main Menu ────────────────────────────────────────────────────
@@ -875,27 +869,25 @@ fn create_app_menu(app: &tauri::AppHandle) -> Result<tauri::menu::Menu<tauri::Wr
     Ok(app_menu)
 }
 
-/// Open settings window with specific page
-fn open_settings_window(app: &tauri::AppHandle, page: &str) -> Result<(), tauri::Error> {
-    let window_label = format!("settings-{}", page);
+/// Open settings window (unified single page)
+fn open_settings_window(app: &tauri::AppHandle) -> Result<(), tauri::Error> {
+    let window_label = "settings";
 
     // Check if window already exists
-    if let Some(existing_window) = app.get_webview_window(&window_label) {
+    if let Some(existing_window) = app.get_webview_window(window_label) {
         let _ = existing_window.show();
         let _ = existing_window.set_focus();
         return Ok(());
     }
 
-    let settings_url = format!("/settings.html?page={}", page);
-
     tauri::WebviewWindowBuilder::new(
         app,
-        &window_label,
-        tauri::WebviewUrl::App(settings_url.into()),
+        window_label,
+        tauri::WebviewUrl::App("/settings.html".into()),
     )
-    .title(format!("Settings - {}", page))
-    .inner_size(500.0, 600.0)
-    .resizable(false)
+    .title("Settings")
+    .inner_size(500.0, 700.0)  // Taller for all sections
+    .resizable(true)  // Allow resizing for longer content
     .build()?;
 
     Ok(())
@@ -949,17 +941,8 @@ fn handle_menu_event(app: &tauri::AppHandle, event: tauri::menu::MenuEvent) {
         }
 
         // Settings menu
-        "settings-instance" => {
-            let _ = open_settings_window(app, "instance");
-        }
-        "settings-token" => {
-            let _ = open_settings_window(app, "token");
-        }
-        "settings-notifications" => {
-            let _ = open_settings_window(app, "notifications");
-        }
-        "settings-general" => {
-            let _ = open_settings_window(app, "general");
+        "settings" => {
+            let _ = open_settings_window(app);
         }
 
         _ => {}
