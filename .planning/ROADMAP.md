@@ -32,12 +32,13 @@
 
 **Plans:**
 - [x] 01-PLAN.md — Add Test Credentials button and verify existing functionality
-- [ ] 02-PLAN.md — Consolidate Settings UI into single scrolling page
+- [x] 02-PLAN.md — Consolidate Settings UI into single scrolling page
 
 **Notes:**
 - All fixes target `src/settings.html` and `src-tauri/src/main.rs`
 - Backend commands (`save_config`, `load_config`, `test_ntfy_connection`) already exist
 - Plan 02 is a gap closure to address fundamental structural issues identified in UAT
+- Plan 02 consolidated 4 separate settings pages into a single scrolling page
 
 ---
 
@@ -45,7 +46,7 @@
 
 | Phase | Status | Plans | Progress |
 |-------|--------|-------|----------|
-| 1 | In Progress | 1/2 | 50% |
+| 1 | Complete | 2/2 | 100% |
 
 ---
 *Roadmap created: 2026-03-04*

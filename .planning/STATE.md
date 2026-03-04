@@ -1,24 +1,24 @@
 ---
 gsd_state_version: 1.0
-milestone: v26.3
-milestone_name: milestone
+milestone: v26.3.2
+milestone_name: Settings UI Fixes
 current_phase: 01
-current_plan: Not started
-status: completed
-last_updated: "2026-03-04T17:37:53.319Z"
+current_plan: 02
+status: complete
+last_updated: "2026-03-04T18:30:00.000Z"
 progress:
   total_phases: 1
   completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # Project State
 
 **Project:** ntfy.desktop Settings UI Fixes
 **Current Phase:** 01
-**Current Plan:** Not started
-**Status:** Milestone complete
+**Current Plan:** 02 (Complete)
+**Status:** Complete - All gap closures implemented
 
 ## Project Reference
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 
 | Phase | Status | Plans | Progress |
 |-------|--------|-------|----------|
-| 1: Settings UI Fixes | ✓ Complete | 1/1 | 100% |
+| 1: Settings UI Fixes | Complete | 2/2 complete | 100% |
 
 ## Session History
 
@@ -39,16 +39,22 @@ See: .planning/PROJECT.md (updated 2026-03-04)
 | 2026-03-04 | Codebase mapped | Brownfield Tauri 2.0 app analyzed |
 | 2026-03-04 | Project initialized | Bug-fix milestone for settings UI |
 | 2026-03-04 | Roadmap created | Single phase for all settings fixes |
-| 2026-03-04 | Phase 1 complete | Fixed Test Credentials button, verified all settings functionality |
+| 2026-03-04 | Phase 1 Plan 1 complete | Fixed Test Credentials button, verified all settings functionality |
+| 2026-03-04 | UAT identified gaps | Settings structure issue: 4 separate pages should be single scrolling page |
+| 2026-03-04 | Gap closure plan created | Plan 02 to consolidate settings into single page |
+| 2026-03-04 | Phase 1 Plan 2 complete | Consolidated Settings UI into single scrolling page, simplified menu |
 
 ## Decisions
 
 - Used saved config for instance_url instead of form field (Authorization page doesn't have instance_url input)
 - Added test-result div for detailed error feedback to user
+- Consolidating all settings into single scrolling page (Gap 1 closure)
+- Simplifying menu to single "Settings" item (Gap 1 closure)
+- Test Credentials button now reads instance_url from same page form field
 
 ## Next Action
 
-All planned work complete. Ready for next feature development.
+Phase complete. Ready for final verification or next milestone.
 
 ---
 *State updated: 2026-03-04*
