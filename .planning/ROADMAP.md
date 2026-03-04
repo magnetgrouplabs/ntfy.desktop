@@ -30,10 +30,14 @@
 4. General page shows start_hidden, quit_on_close, dev_tools toggles
 5. Notifications page shows poll_rate, sounds, persistence settings
 
+**Plans:**
+- [x] 01-PLAN.md — Add Test Credentials button and verify existing functionality
+- [ ] 02-PLAN.md — Consolidate Settings UI into single scrolling page
+
 **Notes:**
-- All fixes target `src/settings.html`
+- All fixes target `src/settings.html` and `src-tauri/src/main.rs`
 - Backend commands (`save_config`, `load_config`, `test_ntfy_connection`) already exist
-- Focus on frontend JavaScript logic and page visibility
+- Plan 02 is a gap closure to address fundamental structural issues identified in UAT
 
 ---
 
@@ -41,8 +45,8 @@
 
 | Phase | Status | Plans | Progress |
 |-------|--------|-------|----------|
-| 1 | ✓ Complete | 1/1 | 100% |
+| 1 | In Progress | 1/2 | 50% |
 
 ---
 *Roadmap created: 2026-03-04*
-*Roadmap completed: 2026-03-04*
+*Roadmap updated: 2026-03-04*
