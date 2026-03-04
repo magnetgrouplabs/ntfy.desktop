@@ -124,3 +124,19 @@ The checkpoint for human verification was auto-approved due to `auto_advance: tr
 - [x] Menu simplified to single Settings item
 - [x] No regressions in settings save/load functionality
 - [x] Build succeeds
+
+## Self-Check: PASSED
+
+- [x] src/settings.html exists
+- [x] src-tauri/src/main.rs exists
+- [x] 02-SUMMARY.md exists
+- [x] Task 1 commit (009eec2) exists
+- [x] Task 2 commit (4c0f637) exists
+
+## Self-Check: PASSED
+
+- src/settings.html: FOUND
+- src-tauri/src/main.rs: FOUND
+- 02-SUMMARY.md: FOUND
+- Task 1 commit (009eec2): FOUND
+- Task 2 commit (4c0f637): FOUND
