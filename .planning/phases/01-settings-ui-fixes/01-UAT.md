@@ -1,50 +1,44 @@
 ---
-status: resolved
+status: complete
 phase: 01-settings-ui-fixes
 source: [01-SUMMARY.md, 02-SUMMARY.md]
 started: 2026-03-04T17:30:00Z
-updated: 2026-03-04T19:00:00Z
+updated: 2026-03-04T20:15:00Z
 ---
 
 ## Current Test
 
-[testing complete - skipped remaining tests due to blocker]
+[testing complete - all tests passed]
 
 ## Tests
 
-### 1. Test Credentials Button
-expected: Open Settings → Authorization page. Enter valid ntfy credentials (token or user/pass). Click "Test Credentials" button. Button shows "Testing..." while in progress, then displays success indicator (green checkmark) for valid credentials. If invalid credentials, shows error indicator with error message.
-result: issue
-reported: "Settings is a mess - multiple separate pages instead of one. Test Connection button is under URL on Instance page and does nothing. Want single scrolling page with all settings in sections."
-severity: blocker
+### 1. Test Credentials Button (Re-test)
+expected: Open Settings (Ctrl+,). Enter instance URL in Instance section. Enter credentials in Authentication section (on same page). Click "Test Credentials" button. Shows "Testing..." then success/error indicator.
+result: pass
 
 ### 2. Save Closes Window
-expected: Open any Settings page. Change a setting value. Click "Save" button. The Settings window closes automatically after saving.
-result: skipped
-reason: Blocked by fundamental structure issue - need to test after redesign
+expected: Open Settings. Change a setting value. Click "Save" button. The Settings window closes automatically after saving.
+result: pass
 
 ### 3. Settings Persist
-expected: Open Settings → Instance page. Change the Instance URL. Click Save. Reopen Settings → Instance page. The Instance URL field shows the value you saved. Test applies to all settings pages.
-result: skipped
-reason: Blocked by fundamental structure issue - need to test after redesign
+expected: Open Settings. Change the Instance URL. Click Save. Reopen Settings. The Instance URL field shows the value you saved. Test applies to all settings fields.
+result: pass
 
-### 4. General Page Layout
-expected: Open Settings → General page. The page shows exactly 3 toggle switches: "Start Hidden", "Quit on Close", "Developer Tools". No other input fields or controls on this page.
-result: skipped
-reason: Blocked by fundamental structure issue - need to test after redesign
+### 4. General Section Layout
+expected: Open Settings. Scroll to General section. Shows exactly 3 toggle switches: "Start Hidden", "Quit on Close", "Developer Tools". All visible on the single scrolling page.
+result: pass
 
-### 5. Notifications Page Layout
-expected: Open Settings → Notifications page. The page shows: Poll Rate (number input), Date/Time Format (text input), Urgent notification threshold (dropdown), Standard Sound (dropdown with preview button), Urgent Sound (dropdown with preview button), Persistent Notifications (dropdown). All notification-related settings are on this page.
-result: skipped
-reason: Blocked by fundamental structure issue - need to test after redesign
+### 5. Notifications Section Layout
+expected: Open Settings. Scroll to Notifications section. Shows: Poll Rate (number input), Date/Time Format (text input), Urgent notification threshold (dropdown), Standard Sound (dropdown with preview button), Urgent Sound (dropdown with preview button), Persistent Notifications (dropdown). All visible on the single scrolling page.
+result: pass
 
 ## Summary
 
 total: 5
-passed: 0
-issues: 1
+passed: 5
+issues: 0
 pending: 0
-skipped: 4
+skipped: 0
 
 ## Gaps
 
