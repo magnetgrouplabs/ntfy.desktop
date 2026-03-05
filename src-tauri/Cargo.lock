@@ -2368,7 +2368,7 @@ dependencies = [
 
 [[package]]
 name = "ntfy-desktop"
-version = "26.3.1"
+version = "26.3.2"
 dependencies = [
  "anyhow",
  "assert_matches",
