@@ -629,7 +629,10 @@
 
       // Get instance URL from form field (now on same page)
       const instanceUrlEl = document.getElementById("instance_url");
-      const instanceUrl = (instanceUrlEl ? instanceUrlEl.value : currentConfig.instance_url || "").trim();
+      let instanceUrl = (instanceUrlEl ? instanceUrlEl.value : currentConfig.instance_url || "").trim();
+
+      // Strip /app suffix for API calls - the API is at the root domain, /app is for web UI
+      const apiUrl = instanceUrl.replace(/\/app\/?$/i, '');
 
       // Get credentials from form
       const apiTokenEl = document.getElementById("api_token");
@@ -660,11 +663,11 @@
 
       try {
         const result = await invoke("test_ntfy_connection", {
-          server_url: instanceUrl,
+          serverUrl: apiUrl,
           topic: "announcements",
-          api_token: apiToken || null,
-          auth_user: authUser || null,
-          auth_pass: authPass || null
+          apiToken: apiToken || null,
+          authUser: authUser || null,
+          authPass: authPass || null
         });
 
         // Success
@@ -674,7 +677,7 @@
         btnStatus.textContent = "✓";
         btnStatus.style.display = "inline";
         if (resultDiv) {
-          resultDiv.textContent = "Successfully connected to " + escapeHtml(instanceUrl);
+          resultDiv.textContent = "Successfully connected to " + escapeHtml(apiUrl);
           resultDiv.className = "test-result success";
           resultDiv.style.display = "block";
         }
@@ -688,20 +691,29 @@
         }, 3000);
 
       } catch (e) {
-        // Error
+        // Error - show user-friendly message with expandable details
         btn.disabled = false;
         btn.className = "btn-test error";
         btnText.textContent = "Connection Failed";
         btnStatus.textContent = "✗";
         btnStatus.style.display = "inline";
         console.error("Connection test failed:", e);
+
         if (resultDiv) {
-          resultDiv.textContent = escapeHtml(String(e));
+          const errorMsg = String(e);
+          // Create user-friendly error display with toggle for details
+          resultDiv.innerHTML = `
+            <div class="error-summary">Could not connect to server. Check your URL and credentials.</div>
+            <button type="button" class="error-details-toggle" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+              Show Details
+            </button>
+            <pre class="error-details" style="display:none;margin-top:8px;white-space:pre-wrap;word-break:break-all;font-size:11px;">${escapeHtml(errorMsg)}</pre>
+          `;
           resultDiv.className = "test-result error";
           resultDiv.style.display = "block";
         }
 
-        // Reset after 5 seconds (longer for error messages)
+        // Reset after 8 seconds (longer for error messages)
         setTimeout(() => {
           btn.className = "btn-test";
           btnText.textContent = "Test Credentials";
